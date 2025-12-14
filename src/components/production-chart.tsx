@@ -54,8 +54,6 @@ export function ProductionChart({ data }: ProductionChartProps) {
     
     // Distribuir proporcionalmente considerando o horário
     let currentDate = new Date(startDate);
-    let remainingProduction = totalProduction;
-    let remainingHours = totalHours;
     
     while (currentDate <= endDate) {
       const dateKey = currentDate.toISOString().split('T')[0];

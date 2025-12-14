@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
     
-    let whereConditions = [];
+    const whereConditions = [];
     
     if (from) {
       whereConditions.push(gte(readings.ts, new Date(from)));

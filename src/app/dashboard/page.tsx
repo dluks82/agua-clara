@@ -13,8 +13,9 @@ import { SettingsDialog } from "@/components/settings-dialog";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { from?: string; to?: string };
+  searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const billingCycleDay = await getBillingCycleDay();
   
   // Logic to determine currentFrom/currentTo for the Navigator if not in URL
@@ -22,11 +23,11 @@ export default async function DashboardPage({
   // To avoid duplication, let's assume getDashboardData returns the used period.
   // We'll update getDashboardData to return 'period' metadata.
   
-  const filter = searchParams.from && searchParams.to 
+  const filter = resolvedSearchParams.from && resolvedSearchParams.to 
     ? { 
         type: "custom" as const, 
-        from: new Date(searchParams.from), 
-        to: new Date(searchParams.to) 
+        from: new Date(resolvedSearchParams.from), 
+        to: new Date(resolvedSearchParams.to) 
       }
     : undefined;
 
@@ -58,7 +59,7 @@ export default async function DashboardPage({
         {/* Alertas */}
         {data.alerts.length > 0 && (
           <div className="space-y-2">
-            {data.alerts.map((alert: any, index: number) => (
+            {data.alerts.map((alert, index) => (
               <Alert key={index} variant={alert.severity === "high" ? "destructive" : "default"}>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>

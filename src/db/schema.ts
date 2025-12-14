@@ -1,7 +1,43 @@
-import { pgTable, serial, timestamp, numeric, text, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, serial, timestamp, numeric, text, jsonb, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
+
+export const tenants = pgTable("tenants", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  image: text("image"),
+  google_sub: text("google_sub").unique(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const memberships = pgTable(
+  "memberships",
+  {
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tenant_id: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    role: text("role").notNull(), // owner | admin | operator | viewer
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.user_id, t.tenant_id] }),
+  })
+);
 
 export const readings = pgTable("readings", {
   id: serial("id").primaryKey(),
+  tenant_id: text("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
   ts: timestamp("ts", { withTimezone: true }).notNull(),
   hydrometer_m3: numeric("hydrometer_m3", { precision: 10, scale: 3 }).notNull(),
   horimeter_h: numeric("horimeter_h", { precision: 10, scale: 3 }).notNull(),
@@ -16,12 +52,20 @@ export const readings = pgTable("readings", {
 
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
-  key: text("key").notNull().unique(),
+  tenant_id: text("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  key: text("key").notNull(),
   value: text("value").notNull(),
-});
+}, (t) => ({
+  tenantKeyUnique: uniqueIndex("settings_tenant_key_unique").on(t.tenant_id, t.key),
+}));
 
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
+  tenant_id: text("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
   ts: timestamp("ts", { withTimezone: true }).notNull(),
   type: text("type").notNull(),
   payload: jsonb("payload"),
@@ -33,3 +77,9 @@ export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+export type Tenant = typeof tenants.$inferSelect;
+export type NewTenant = typeof tenants.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Membership = typeof memberships.$inferSelect;
+export type NewMembership = typeof memberships.$inferInsert;

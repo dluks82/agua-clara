@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { settings } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { requireTenantRole } from "@/lib/api-rbac";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "viewer");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
-    const allSettings = await db.select().from(settings);
+    const allSettings = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.tenant_id, ctx.tenantId));
     
     // Converter array para objeto
     const settingsObject = allSettings.reduce((acc, setting) => {
@@ -24,6 +31,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "admin");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const body = await request.json();
     const { key, value } = body;
@@ -39,7 +49,7 @@ export async function POST(request: NextRequest) {
     const existing = await db
       .select()
       .from(settings)
-      .where(eq(settings.key, key))
+      .where(and(eq(settings.tenant_id, ctx.tenantId), eq(settings.key, key)))
       .limit(1);
     
     if (existing.length > 0) {
@@ -47,10 +57,10 @@ export async function POST(request: NextRequest) {
       await db
         .update(settings)
         .set({ value })
-        .where(eq(settings.key, key));
+        .where(and(eq(settings.tenant_id, ctx.tenantId), eq(settings.key, key)));
     } else {
       // Criar novo
-      await db.insert(settings).values({ key, value });
+      await db.insert(settings).values({ tenant_id: ctx.tenantId, key, value });
     }
     
     return NextResponse.json({ message: "Configuração salva com sucesso" });
@@ -64,6 +74,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "admin");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const body = await request.json();
     const settingsToUpdate = body;
@@ -80,16 +93,16 @@ export async function PUT(request: NextRequest) {
       const existing = await db
         .select()
         .from(settings)
-        .where(eq(settings.key, key))
+        .where(and(eq(settings.tenant_id, ctx.tenantId), eq(settings.key, key)))
         .limit(1);
       
       if (existing.length > 0) {
         return db
           .update(settings)
           .set({ value: String(value) })
-          .where(eq(settings.key, key));
+          .where(and(eq(settings.tenant_id, ctx.tenantId), eq(settings.key, key)));
       } else {
-        return db.insert(settings).values({ key, value: String(value) });
+        return db.insert(settings).values({ tenant_id: ctx.tenantId, key, value: String(value) });
       }
     });
     

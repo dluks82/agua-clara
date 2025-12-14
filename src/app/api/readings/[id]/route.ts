@@ -3,11 +3,15 @@ import { db } from "@/db";
 import { readings } from "@/db/schema";
 import { createReadingSchema } from "@/lib/validations/readings";
 import { eq, desc, and, ne } from "drizzle-orm";
+import { requireTenantRole } from "@/lib/api-rbac";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const ctx = await requireTenantRole(request, "operator");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const { id } = await params;
     const readingId = parseInt(id);
@@ -26,7 +30,7 @@ export async function PUT(
     const existingReading = await db
       .select()
       .from(readings)
-      .where(eq(readings.id, readingId))
+      .where(and(eq(readings.id, readingId), eq(readings.tenant_id, ctx.tenantId)))
       .limit(1);
 
     if (existingReading.length === 0) {
@@ -40,7 +44,7 @@ export async function PUT(
     const otherReadings = await db
       .select()
       .from(readings)
-      .where(ne(readings.id, readingId))
+      .where(and(ne(readings.id, readingId), eq(readings.tenant_id, ctx.tenantId)))
       .orderBy(desc(readings.ts));
 
     // Verificar se timestamp não conflita com outras leituras
@@ -109,7 +113,7 @@ export async function PUT(
         horimeter_h: validatedData.horimeter_h.toString(),
         notes: validatedData.notes,
       })
-      .where(eq(readings.id, readingId))
+      .where(and(eq(readings.id, readingId), eq(readings.tenant_id, ctx.tenantId)))
       .returning();
 
     return NextResponse.json(
@@ -132,6 +136,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const ctx = await requireTenantRole(request, "operator");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const { id } = await params;
     const readingId = parseInt(id);
@@ -147,7 +154,7 @@ export async function DELETE(
     const existingReading = await db
       .select()
       .from(readings)
-      .where(eq(readings.id, readingId))
+      .where(and(eq(readings.id, readingId), eq(readings.tenant_id, ctx.tenantId)))
       .limit(1);
 
     if (existingReading.length === 0) {
@@ -160,7 +167,7 @@ export async function DELETE(
     // Excluir a leitura
     await db
       .delete(readings)
-      .where(eq(readings.id, readingId));
+      .where(and(eq(readings.id, readingId), eq(readings.tenant_id, ctx.tenantId)));
 
     return NextResponse.json(
       { message: "Leitura excluída com sucesso" },

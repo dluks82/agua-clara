@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { readings } from "@/db/schema";
-import { desc, and, gte, lte } from "drizzle-orm";
+import { desc, and, gte, lte, eq } from "drizzle-orm";
 import { calculateIntervals, calculateKPIs } from "@/lib/calculations";
 import { detectAlerts, calculateBaseline } from "@/lib/alerts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { requireTenantRole } from "@/lib/api-rbac";
 
 export async function GET(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "viewer");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const { searchParams } = new URL(request.url);
     const from = searchParams.get("from");
     const to = searchParams.get("to");
     
-    const whereConditions = [];
+    const whereConditions = [eq(readings.tenant_id, ctx.tenantId)];
     
     if (from) {
       whereConditions.push(gte(readings.ts, new Date(from)));
@@ -26,7 +30,7 @@ export async function GET(request: NextRequest) {
     const readingsData = await db
       .select()
       .from(readings)
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .where(and(...whereConditions))
       .orderBy(desc(readings.ts));
     
     const intervals = calculateIntervals(readingsData);

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createReadingSchema } from "@/lib/validations/readings";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import type { CreateReadingInput } from "@/lib/validations/readings";
 
 interface ReadingFormProps {
   onSuccess?: () => void;
@@ -40,7 +41,7 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
         timestamp = new Date(timestamp).toISOString();
       }
       
-      const payload: any = {
+      const payload: CreateReadingInput = {
         ts: timestamp,
         hydrometer_m3: parseFloat(formData.hydrometer_m3),
         horimeter_h: parseFloat(formData.horimeter_h),

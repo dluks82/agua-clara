@@ -111,7 +111,7 @@ export async function getDashboardData(filter?: PeriodFilter) {
     });
 
     // 4. Construct Final List with Virtual Readings
-    let finalReadings = [...readingsInRange];
+    const finalReadings = [...readingsInRange];
 
     // Add Virtual Start if needed
     if (readingBefore) {

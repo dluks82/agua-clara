@@ -12,6 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Save, AlertTriangle, Settings, Bell, BarChart3, Loader2, Calendar } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HelpHint } from "@/components/help-hint";
+import { PublicDashboardLinks } from "./public-dashboard-links";
 
 interface SettingsData {
   // Alertas
@@ -278,6 +279,8 @@ export default function ConfiguracoesClient() {
             </div>
           </CardContent>
         </Card>
+
+        <PublicDashboardLinks />
 
         {/* Configurações de Baseline */}
         <Card>

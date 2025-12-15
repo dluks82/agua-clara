@@ -83,6 +83,24 @@ export const events = pgTable(
   })
 );
 
+export const publicDashboardLinks = pgTable(
+  "public_dashboard_links",
+  {
+    id: text("id").primaryKey(),
+    tenant_id: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    token_hash: text("token_hash").notNull().unique(),
+    token_enc: text("token_enc"),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revoked_at: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => ({
+    tenantIdx: index("public_dashboard_links_tenant_idx").on(t.tenant_id),
+  })
+);
+
 export type Reading = typeof readings.$inferSelect;
 export type NewReading = typeof readings.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
@@ -95,3 +113,5 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Membership = typeof memberships.$inferSelect;
 export type NewMembership = typeof memberships.$inferInsert;
+export type PublicDashboardLink = typeof publicDashboardLinks.$inferSelect;
+export type NewPublicDashboardLink = typeof publicDashboardLinks.$inferInsert;

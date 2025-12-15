@@ -6,16 +6,18 @@ import { ProductionChart } from "@/components/production-chart";
 import { ExportButton } from "@/components/export-button";
 import { PeriodNavigator } from "@/components/period-navigator";
 import { getBillingCycleDay } from "@/app/actions";
-import { AlertTriangle, Droplets, Clock, Activity, HelpCircle } from "lucide-react";
+import { AlertTriangle, Droplets, Clock, Activity, HelpCircle, ClipboardList } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { requireTenant } from "@/lib/tenancy";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
-  const { tenantId } = await requireTenant("viewer");
+  const { tenantId, role } = await requireTenant("viewer");
   const resolvedSearchParams = await searchParams;
   const billingCycleDay = await getBillingCycleDay();
   
@@ -33,6 +35,7 @@ export default async function DashboardPage({
     : undefined;
 
   const data = await getDashboardData(tenantId, filter);
+  const canWrite = role !== "viewer";
 
   return (
     <TooltipProvider>
@@ -68,6 +71,33 @@ export default async function DashboardPage({
               </Alert>
             ))}
           </div>
+        )}
+
+        {data.intervals.length === 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="h-5 w-5" />
+                Comece registrando leituras
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <div>
+                O dashboard precisa de <strong>pelo menos 2 leituras</strong> para calcular produção, horas e vazão no
+                período.
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href="/leituras">{canWrite ? "Cadastrar leituras" : "Ver leituras"}</Link>
+                </Button>
+                {!canWrite ? (
+                  <div className="text-xs text-muted-foreground">
+                    Você está como <code>viewer</code>. Peça a um admin/owner para registrar leituras.
+                  </div>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

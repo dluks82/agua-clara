@@ -16,7 +16,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
-  const { tenantId } = await requireTenant("viewer");
+  const { tenantId, role } = await requireTenant("viewer");
   const resolvedSearchParams = await searchParams;
   const billingCycleDay = await getBillingCycleDay();
   
@@ -48,7 +48,7 @@ export default async function DashboardPage({
 
 
           <div className="flex items-center gap-2">
-            <SettingsDialog />
+            {(role === "admin" || role === "owner") && <SettingsDialog />}
             <PeriodNavigator 
               billingCycleDay={billingCycleDay}
               currentFrom={data.period.from}

@@ -40,14 +40,14 @@ export default async function DashboardPage({
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">Dashboard</h1>
             <p className="text-muted-foreground">
               Visão geral do sistema de monitoramento de água
             </p>
           </div>
 
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {(role === "admin" || role === "owner") && <SettingsDialog />}
             <PeriodNavigator 
               billingCycleDay={billingCycleDay}

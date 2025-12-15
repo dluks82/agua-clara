@@ -101,7 +101,7 @@ export default function ConfiguracoesClient() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Configurações</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Configurações</h1>
           <p className="text-muted-foreground">
             Personalize os parâmetros do sistema
           </p>
@@ -120,14 +120,14 @@ export default function ConfiguracoesClient() {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Configurações</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">Configurações</h1>
             <p className="text-muted-foreground">
               Personalize os parâmetros do sistema de monitoramento
             </p>
           </div>
-          <Button onClick={saveSettings} disabled={saving}>
+          <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
             <Save className="mr-2 h-4 w-4" />
             {saving ? "Salvando..." : "Salvar Configurações"}
           </Button>

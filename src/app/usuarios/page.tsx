@@ -65,7 +65,52 @@ export default async function UsuariosPage({
             <Button type="submit">Adicionar</Button>
           </form>
 
-          <div className="overflow-x-auto">
+          <div className="space-y-2 sm:hidden">
+            {members.map((m) => (
+              <div key={m.userId} className="rounded-md border p-3">
+                <div className="text-sm font-medium">{m.email}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{m.name ?? "—"}</div>
+
+                <div className="mt-3 space-y-2">
+                  <form action={updateMemberRole} className="flex items-center gap-2">
+                    <input type="hidden" name="userId" value={m.userId} />
+                    <select
+                      name="role"
+                      defaultValue={m.role}
+                      className="flex-1 rounded-md border px-2 py-2 text-sm"
+                      disabled={m.role === "owner" && currentRole !== "owner"}
+                    >
+                      <option value="viewer">viewer</option>
+                      <option value="operator">operator</option>
+                      <option value="admin">admin</option>
+                      <option value="owner">owner</option>
+                    </select>
+                    <Button type="submit" size="sm" variant="outline">
+                      Salvar
+                    </Button>
+                  </form>
+
+                  <form action={removeMember}>
+                    <input type="hidden" name="userId" value={m.userId} />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="destructive"
+                      className="w-full"
+                      disabled={m.role === "owner" && currentRole !== "owner"}
+                    >
+                      Remover
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            ))}
+            {members.length === 0 && (
+              <div className="py-6 text-center text-sm text-muted-foreground">Nenhum membro encontrado.</div>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">

@@ -70,14 +70,15 @@ export default async function DashboardPage({
     if (!showForecast) return null;
     if (data.intervals.length === 0) return null;
 
-    const latestTs = data.readings
+    const latestRealTs = data.readings
+      .filter((r) => r.id !== -1)
       .map((r) => r.ts)
-      .filter((ts) => period.from <= ts && ts <= period.to)
+      .filter((ts) => period.from <= ts && ts <= period.to && ts <= now)
       .reduce<Date | null>((max, ts) => (max && max > ts ? max : ts), null);
-    if (!latestTs) return null;
+    if (!latestRealTs) return null;
 
     const totalSpanMs = period.to.getTime() - period.from.getTime();
-    const elapsedMs = latestTs.getTime() - period.from.getTime();
+    const elapsedMs = latestRealTs.getTime() - period.from.getTime();
     if (totalSpanMs <= 0 || elapsedMs <= 0) return null;
 
     const producedSoFar = data.kpis.producao_total_m3;
@@ -146,13 +147,20 @@ export default async function DashboardPage({
               <Droplets className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="space-y-1">
-              {productionEstimateM3 ? (
+              {productionEstimateM3 !== null ? (
                 <>
                   <div className="text-2xl font-bold">{productionEstimateM3.toFixed(1)} m³</div>
                   <div className="text-xs text-muted-foreground">Estimativa para o período selecionado</div>
                 </>
+              ) : !showForecast ? (
+                <>
+                  <div className="text-2xl font-bold">{data.kpis.producao_total_m3.toFixed(1)} m³</div>
+                  <div className="text-xs text-muted-foreground">Produção confirmada no período selecionado</div>
+                </>
               ) : (
-                <div className="text-sm text-muted-foreground">Disponível quando há leituras no período atual.</div>
+                <div className="text-sm text-muted-foreground">
+                  Disponível quando há leituras suficientes no período em andamento.
+                </div>
               )}
             </CardContent>
           </Card>

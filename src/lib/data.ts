@@ -63,7 +63,7 @@ export function resolveDashboardPeriod({
   return billingCycleRange(now, billingCycleDay);
 }
 
-function billingCycleRange(now: Date, cycleDay: number): DashboardPeriod {
+export function billingCycleRange(now: Date, cycleDay: number): DashboardPeriod {
   const currentDay = now.getDate();
   let endMonth = now.getMonth();
   let endYear = now.getFullYear();

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth, type NextRequestWithAuth } from "next-auth/middleware";
 
 const publicPaths = new Set<string>(["/login"]);
+const publicPrefixPaths = ["/public/"];
 const tenantSelectPaths = new Set<string>(["/select-tenant"]);
 
 export default withAuth(
@@ -13,7 +14,7 @@ export default withAuth(
   if (pathname === "/favicon.ico") return;
 
   const isLoggedIn = typeof req.nextauth?.token?.userId === "string";
-  if (!isLoggedIn && !publicPaths.has(pathname)) {
+  if (!isLoggedIn && !(publicPaths.has(pathname) || publicPrefixPaths.some((p) => pathname.startsWith(p)))) {
     const url = new URL("/login", nextUrl);
     return NextResponse.redirect(url);
   }
@@ -32,7 +33,7 @@ export default withAuth(
     callbacks: {
       authorized: ({ req, token }) => {
         const pathname = req.nextUrl.pathname;
-        if (publicPaths.has(pathname)) return true;
+        if (publicPaths.has(pathname) || publicPrefixPaths.some((p) => pathname.startsWith(p))) return true;
         return typeof token?.userId === "string";
       },
     },

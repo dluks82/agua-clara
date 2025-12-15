@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, X, AlertTriangle } from "lucide-react";
+import { Save, X, AlertTriangle, Loader2 } from "lucide-react";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
 
 interface Reading {
@@ -141,12 +141,12 @@ export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFor
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           <X className="mr-2 h-4 w-4" />
           Cancelar
         </Button>
         <Button type="submit" disabled={submitting}>
-          <Save className="mr-2 h-4 w-4" />
+          {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           {submitting ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </div>

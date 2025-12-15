@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import type { CreateReadingInput } from "@/lib/validations/readings";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
+import { Loader2 } from "lucide-react";
 
 interface ReadingFormProps {
   onSuccess?: () => void;
@@ -259,6 +260,7 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
           </div>
 
           <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {isSubmitting ? "Cadastrando..." : "Cadastrar Leitura"}
           </Button>
         </form>

@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { RefreshCw, Trash2, Edit } from "lucide-react";
+import { RefreshCw, Trash2, Edit, Loader2 } from "lucide-react";
 import { ReadingEditForm } from "@/components/reading-edit-form";
 
 interface Reading {
@@ -165,7 +165,62 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
           <CardTitle>Leituras ({readings.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="space-y-2 sm:hidden">
+            {readings.map((reading) => (
+              <div key={reading.id} className="rounded-md border p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">
+                      {format(new Date(reading.ts), "dd/MM/yyyy HH:mm")}
+                    </div>
+                    <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <div>
+                        <span className="font-medium text-foreground">Hidrômetro:</span>{" "}
+                        <span className="font-mono">
+                          {parseFloat(reading.hydrometer_m3).toFixed(3)}
+                        </span>{" "}
+                        m³
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground">Horímetro:</span>{" "}
+                        <span className="font-mono">
+                          {parseFloat(reading.horimeter_h).toFixed(3)}
+                        </span>{" "}
+                        h
+                      </div>
+                    </div>
+                    {reading.notes ? (
+                      <div className="mt-2 text-sm text-muted-foreground">{reading.notes}</div>
+                    ) : null}
+                  </div>
+
+                  {canWrite ? (
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Editar"
+                        onClick={() => handleEditClick(reading)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon-sm"
+                        aria-label="Excluir"
+                        onClick={() => handleDeleteClick(reading)}
+                        disabled={deletingId === reading.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden rounded-md border sm:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -179,26 +234,18 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
               <TableBody>
                 {readings.map((reading) => (
                   <TableRow key={reading.id}>
-                    <TableCell>
-                      {format(new Date(reading.ts), "dd/MM/yyyy HH:mm")}
-                    </TableCell>
+                    <TableCell>{format(new Date(reading.ts), "dd/MM/yyyy HH:mm")}</TableCell>
                     <TableCell className="font-mono">
                       {parseFloat(reading.hydrometer_m3).toFixed(3)}
                     </TableCell>
                     <TableCell className="font-mono">
                       {parseFloat(reading.horimeter_h).toFixed(3)}
                     </TableCell>
-                    <TableCell>
-                      {reading.notes || "-"}
-                    </TableCell>
+                    <TableCell>{reading.notes || "-"}</TableCell>
                     {canWrite && (
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditClick(reading)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleEditClick(reading)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
@@ -244,7 +291,7 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
                 </p>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={handleDeleteCancel}>
+                <Button variant="outline" onClick={handleDeleteCancel} disabled={deletingId !== null}>
                   Cancelar
                 </Button>
                 <Button
@@ -252,6 +299,7 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
                   onClick={handleDeleteConfirm}
                   disabled={deletingId !== null}
                 >
+                  {deletingId !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {deletingId !== null ? "Excluindo..." : "Excluir"}
                 </Button>
               </DialogFooter>

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Calendar, Wrench, Settings, AlertTriangle, HelpCircle, Edit, Trash2 } from "lucide-react";
+import { Plus, Calendar, AlertTriangle, HelpCircle, Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
@@ -249,7 +249,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Eventos</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Eventos</h1>
           <p className="text-muted-foreground">
             Registre e acompanhe eventos do sistema
           </p>
@@ -268,9 +268,9 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Eventos</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">Eventos</h1>
             <p className="text-muted-foreground">
               Registre e acompanhe eventos do sistema de monitoramento
             </p>
@@ -279,7 +279,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
           {canWrite && (
             <Dialog open={showForm} onOpenChange={setShowForm}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Evento
                 </Button>
@@ -361,10 +361,11 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 </div>
                 
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                  <Button type="button" variant="outline" onClick={() => setShowForm(false)} disabled={submitting}>
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={submitting}>
+                    {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {submitting ? "Registrando..." : "Registrar Evento"}
                   </Button>
                 </div>
@@ -396,63 +397,109 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 <p className="text-sm">Clique em &quot;Novo Evento&quot; para começar</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data/Hora</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Detalhes</TableHead>
-                    {canWrite && <TableHead className="w-[100px]">Ações</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                <div className="space-y-2 md:hidden">
                   {events.map((event) => {
                     const typeInfo = getEventTypeInfo(event.type);
                     const payload = (event.payload ?? {}) as { description?: string; details?: string };
-                    
+
                     return (
-                      <TableRow key={event.id}>
-                        <TableCell>
-                          {format(new Date(event.ts), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getEventTypeColor(event.type)}>
-                            <span className="mr-1">{typeInfo.icon}</span>
-                            {typeInfo.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {payload.description || "Sem descrição"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {payload.details || "Sem detalhes"}
-                        </TableCell>
-                        {canWrite && (
-                          <TableCell>
-                            <div className="flex gap-2">
+                      <div key={event.id} className="rounded-md border p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(event.ts), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                            </div>
+                            <div className="mt-2">
+                              <Badge className={getEventTypeColor(event.type)}>
+                                <span className="mr-1">{typeInfo.icon}</span>
+                                {typeInfo.label}
+                              </Badge>
+                            </div>
+                            <div className="mt-2 text-sm font-medium">
+                              {payload.description || "Sem descrição"}
+                            </div>
+                            {payload.details ? (
+                              <div className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                                {payload.details}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          {canWrite ? (
+                            <div className="flex shrink-0 items-center gap-2">
                               <Button
                                 variant="outline"
-                                size="sm"
+                                size="icon-sm"
+                                aria-label="Editar"
                                 onClick={() => handleEditEvent(event)}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="destructive"
-                                size="sm"
+                                size="icon-sm"
+                                aria-label="Excluir"
                                 onClick={() => handleDeleteEvent(event)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
-                        )}
-                      </TableRow>
+                          ) : null}
+                        </div>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
+                </div>
+
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data/Hora</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Detalhes</TableHead>
+                        {canWrite && <TableHead className="w-[100px]">Ações</TableHead>}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {events.map((event) => {
+                        const typeInfo = getEventTypeInfo(event.type);
+                        const payload = (event.payload ?? {}) as { description?: string; details?: string };
+
+                        return (
+                          <TableRow key={event.id}>
+                            <TableCell>
+                              {format(new Date(event.ts), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getEventTypeColor(event.type)}>
+                                <span className="mr-1">{typeInfo.icon}</span>
+                                {typeInfo.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">{payload.description || "Sem descrição"}</TableCell>
+                            <TableCell className="text-muted-foreground">{payload.details || "Sem detalhes"}</TableCell>
+                            {canWrite && (
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => handleEditEvent(event)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="destructive" size="sm" onClick={() => handleDeleteEvent(event)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -536,14 +583,15 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 />
               </div>
               
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowEditForm(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setShowEditForm(false)} disabled={submitting}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {submitting ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>

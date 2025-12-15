@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
@@ -11,14 +12,17 @@ interface ExportButtonProps {
 
 export function ExportButton({ from, to }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const searchParams = useSearchParams();
 
   const handleExport = async () => {
     try {
       setIsExporting(true);
       
       const params = new URLSearchParams();
-      if (from) params.append("from", from);
-      if (to) params.append("to", to);
+      const effectiveFrom = from ?? searchParams.get("from") ?? undefined;
+      const effectiveTo = to ?? searchParams.get("to") ?? undefined;
+      if (effectiveFrom) params.append("from", effectiveFrom);
+      if (effectiveTo) params.append("to", effectiveTo);
       
       const response = await fetch(`/api/export?${params.toString()}`);
       

@@ -105,7 +105,7 @@ export default async function DashboardPage({
               currentTo={period.to}
             />
             {canWrite ? <NewReadingDialog variant="outline" /> : null}
-            <ExportButton />
+            <ExportButton from={period.from.toISOString()} to={period.to.toISOString()} />
           </div>
         </div>
 

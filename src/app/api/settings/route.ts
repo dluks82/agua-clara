@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { requireTenantRole } from "@/lib/api-rbac";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function GET(request: NextRequest) {
   const ctx = await requireTenantRole(request, "viewer");
@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
       // Criar novo
       await db.insert(settings).values({ tenant_id: ctx.tenantId, key, value });
     }
+
+    revalidateTag(`dashboard:${ctx.tenantId}`);
     
     return NextResponse.json({ message: "Configuração salva com sucesso" });
   } catch (error) {
@@ -111,6 +113,7 @@ export async function PUT(request: NextRequest) {
 
     revalidatePath("/dashboard");
     revalidatePath("/configuracoes");
+    revalidateTag(`dashboard:${ctx.tenantId}`);
     
     return NextResponse.json({ message: "Configurações atualizadas com sucesso" });
   } catch (error) {

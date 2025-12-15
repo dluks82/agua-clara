@@ -4,6 +4,7 @@ import { readings } from "@/db/schema";
 import { createReadingSchema } from "@/lib/validations/readings";
 import { eq, desc, and, ne } from "drizzle-orm";
 import { requireTenantRole } from "@/lib/api-rbac";
+import { revalidateTag } from "next/cache";
 
 export async function PUT(
   request: NextRequest,
@@ -116,6 +117,8 @@ export async function PUT(
       .where(and(eq(readings.id, readingId), eq(readings.tenant_id, ctx.tenantId)))
       .returning();
 
+    revalidateTag(`dashboard:${ctx.tenantId}`);
+
     return NextResponse.json(
       { message: "Leitura atualizada com sucesso", reading: updatedReading[0] },
       { status: 200 }
@@ -168,6 +171,8 @@ export async function DELETE(
     await db
       .delete(readings)
       .where(and(eq(readings.id, readingId), eq(readings.tenant_id, ctx.tenantId)));
+
+    revalidateTag(`dashboard:${ctx.tenantId}`);
 
     return NextResponse.json(
       { message: "Leitura excluída com sucesso" },

@@ -1,4 +1,4 @@
-import { getDashboardData } from "@/lib/data";
+import { getDashboardData, resolveDashboardPeriod } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ExportButton } from "@/components/export-button";
@@ -11,6 +11,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HelpHint } from "@/components/help-hint";
 import { DashboardCharts } from "@/app/dashboard/dashboard-charts";
+import { unstable_cache } from "next/cache";
+
+function getCachedDashboardData(tenantId: string) {
+  return unstable_cache(
+    async (fromIso: string, toIso: string) => {
+      return getDashboardData(tenantId, { from: new Date(fromIso), to: new Date(toIso) });
+    },
+    ["dashboard", tenantId],
+    { tags: [`dashboard:${tenantId}`], revalidate: 300 }
+  );
+}
 
 export default async function DashboardPage({
   searchParams,
@@ -20,21 +31,14 @@ export default async function DashboardPage({
   const { tenantId, role } = await requireTenant("viewer");
   const resolvedSearchParams = await searchParams;
   const billingCycleDay = await getBillingCycleDay();
-  
-  // Logic to determine currentFrom/currentTo for the Navigator if not in URL
-  // We need to replicate the logic from data.ts or return it from getDashboardData
-  // To avoid duplication, let's assume getDashboardData returns the used period.
-  // We'll update getDashboardData to return 'period' metadata.
-  
-  const filter = resolvedSearchParams.from && resolvedSearchParams.to 
-    ? { 
-        type: "custom" as const, 
-        from: new Date(resolvedSearchParams.from), 
-        to: new Date(resolvedSearchParams.to) 
-      }
-    : undefined;
 
-  const data = await getDashboardData(tenantId, filter);
+  const period = resolveDashboardPeriod({
+    searchFrom: resolvedSearchParams.from,
+    searchTo: resolvedSearchParams.to,
+    billingCycleDay,
+  });
+
+  const data = await getCachedDashboardData(tenantId)(period.from.toISOString(), period.to.toISOString());
   const canWrite = role !== "viewer";
 
   return (
@@ -52,8 +56,8 @@ export default async function DashboardPage({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <PeriodNavigator 
               billingCycleDay={billingCycleDay}
-              currentFrom={data.period.from}
-              currentTo={data.period.to}
+              currentFrom={period.from}
+              currentTo={period.to}
             />
             <ExportButton />
           </div>

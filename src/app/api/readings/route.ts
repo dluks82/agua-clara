@@ -5,6 +5,7 @@ import { createReadingSchema, getReadingsSchema } from "@/lib/validations/readin
 import { desc, and, gte, lte, eq, sql } from "drizzle-orm";
 import { requireTenantRole } from "@/lib/api-rbac";
 import { ZodError } from "zod";
+import { revalidateTag } from "next/cache";
 
 export async function POST(request: NextRequest) {
   const ctx = await requireTenantRole(request, "operator");
@@ -66,6 +67,8 @@ export async function POST(request: NextRequest) {
         horimeter_initial_new: validatedData.horimeter_initial_new?.toString(),
       })
       .returning();
+
+    revalidateTag(`dashboard:${ctx.tenantId}`);
     
     return NextResponse.json({ id: newReading[0].id }, { status: 201 });
   } catch (error) {

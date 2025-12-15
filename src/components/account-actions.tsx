@@ -3,22 +3,27 @@
 import { signOut } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function AccountActions({
   clearTenantAction,
+  size = "sm",
+  className,
 }: {
   clearTenantAction: () => Promise<void>;
+  size?: "sm" | "default";
+  className?: string;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className={cn("flex items-center gap-2", className)}>
       <form action={clearTenantAction}>
-        <Button type="submit" variant="outline" size="sm">
+        <Button type="submit" variant="outline" size={size}>
           Trocar organização
         </Button>
       </form>
       <Button
         variant="outline"
-        size="sm"
+        size={size}
         onClick={() => {
           void signOut({ callbackUrl: "/login" });
         }}

@@ -1,25 +1,16 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ACTIVE_TENANT_COOKIE, listMemberships, requireUserId } from "@/lib/tenancy";
+import { listMemberships, requireUserId } from "@/lib/tenancy";
 import { createTenant, selectTenant } from "./actions";
+import { AutoSelectTenant } from "./select-tenant-client";
 
 export default async function SelectTenantPage() {
   const userId = await requireUserId();
   const memberships = await listMemberships(userId);
 
   if (memberships.length === 1) {
-    const cookieStore = await cookies();
-    cookieStore.set(ACTIVE_TENANT_COOKIE, memberships[0].tenantId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      path: "/",
-    });
-    redirect("/dashboard");
+    return <AutoSelectTenant tenantId={memberships[0].tenantId} selectTenantAction={selectTenant} />;
   }
 
   return (

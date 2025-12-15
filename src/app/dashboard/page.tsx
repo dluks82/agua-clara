@@ -276,15 +276,13 @@ export default async function DashboardPage({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="flex items-center gap-2">
-                <CardTitle className="text-sm font-medium">
-                  Horas Operação
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Operação</CardTitle>
                 <HelpHint
-                  label="Ajuda: horas de operação"
+                  label="Ajuda: operação"
                   content={
                     <p>
-                      Tempo total de operação do sistema, calculado pela diferença entre as leituras do horímetro
-                      (horas).
+                      Mostra o tempo total de operação (horas) e a utilização no período (Horas Operação / Tempo Total
+                      entre leituras).
                     </p>
                   }
                 />
@@ -296,7 +294,7 @@ export default async function DashboardPage({
                 {data.kpis.horas_total_h.toFixed(1)} h
               </div>
               <p className="text-xs text-muted-foreground">
-                No período selecionado
+                Utilização: {data.kpis.utilization_rate_pct ? `${data.kpis.utilization_rate_pct.toFixed(1)}%` : "N/A"}
               </p>
             </CardContent>
           </Card>
@@ -329,28 +327,6 @@ export default async function DashboardPage({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-sm font-medium">
-                  Utilização
-                </CardTitle>
-                <HelpHint
-                  label="Ajuda: utilização"
-                  content={<p>Taxa de utilização da bomba no período (Horas Operação / Tempo Total).</p>}
-                />
-              </div>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {data.kpis.utilization_rate_pct ? `${data.kpis.utilization_rate_pct.toFixed(1)}%` : "N/A"}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Tempo ligado / Tempo total
-              </p>
-            </CardContent>
-          </Card>
         </div>
         
         <DashboardCharts

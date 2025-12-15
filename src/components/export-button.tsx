@@ -8,9 +8,10 @@ import { Download } from "lucide-react";
 interface ExportButtonProps {
   from?: string;
   to?: string;
+  mode?: "csv" | "pdf";
 }
 
-export function ExportButton({ from, to }: ExportButtonProps) {
+export function ExportButton({ from, to, mode = "csv" }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
   const searchParams = useSearchParams();
 
@@ -24,12 +25,13 @@ export function ExportButton({ from, to }: ExportButtonProps) {
       if (effectiveFrom) params.append("from", effectiveFrom);
       if (effectiveTo) params.append("to", effectiveTo);
       
-      const response = await fetch(`/api/export?${params.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error("Erro ao exportar dados");
+      if (mode === "pdf") {
+        window.open(`/export/pdf?${params.toString()}`, "_blank", "noopener,noreferrer");
+        return;
       }
-      
+
+      const response = await fetch(`/api/export?${params.toString()}`);
+      if (!response.ok) throw new Error("Erro ao exportar dados");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -50,7 +52,7 @@ export function ExportButton({ from, to }: ExportButtonProps) {
   return (
     <Button onClick={handleExport} disabled={isExporting} variant="outline">
       <Download className="mr-2 h-4 w-4" />
-      {isExporting ? "Exportando..." : "Exportar CSV"}
+      {isExporting ? "Exportando..." : mode === "pdf" ? "Exportar PDF" : "Exportar CSV"}
     </Button>
   );
 }

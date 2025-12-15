@@ -105,7 +105,10 @@ export default async function DashboardPage({
               currentTo={period.to}
             />
             {canWrite ? <NewReadingDialog variant="outline" /> : null}
-            <ExportButton from={period.from.toISOString()} to={period.to.toISOString()} />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <ExportButton from={period.from.toISOString()} to={period.to.toISOString()} mode="pdf" />
+              <ExportButton from={period.from.toISOString()} to={period.to.toISOString()} mode="csv" />
+            </div>
           </div>
         </div>
 

@@ -64,7 +64,13 @@ export const authOptions: NextAuthOptions = {
 };
 
 export function auth() {
-  return getServerSession(authOptions);
+  return (async () => {
+    try {
+      return await getServerSession(authOptions);
+    } catch {
+      return null;
+    }
+  })();
 }
 
 export const nextAuthHandler = NextAuth(authOptions);

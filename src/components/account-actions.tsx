@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import { Building2, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ export function AccountActions({
     <div className={cn("flex items-center gap-2", className)}>
       <form action={clearTenantAction}>
         <Button type="submit" variant="outline" size={size}>
+          <Building2 className="h-4 w-4" />
           Trocar organização
         </Button>
       </form>
@@ -28,6 +30,7 @@ export function AccountActions({
           void signOut({ callbackUrl: "/login" });
         }}
       >
+        <LogOut className="h-4 w-4" />
         Sair
       </Button>
     </div>

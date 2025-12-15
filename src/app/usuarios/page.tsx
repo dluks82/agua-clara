@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { Save, Trash2, UserPlus } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,10 @@ export default async function UsuariosPage({
                 <option value="owner">owner</option>
               </select>
             </div>
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit">
+              <UserPlus className="h-4 w-4" />
+              Adicionar
+            </Button>
           </form>
 
           <div className="space-y-2 sm:hidden">
@@ -86,6 +90,7 @@ export default async function UsuariosPage({
                       <option value="owner">owner</option>
                     </select>
                     <Button type="submit" size="sm" variant="outline">
+                      <Save className="h-4 w-4" />
                       Salvar
                     </Button>
                   </form>
@@ -99,6 +104,7 @@ export default async function UsuariosPage({
                       className="w-full"
                       disabled={m.role === "owner" && currentRole !== "owner"}
                     >
+                      <Trash2 className="h-4 w-4" />
                       Remover
                     </Button>
                   </form>
@@ -140,6 +146,7 @@ export default async function UsuariosPage({
                           <option value="owner">owner</option>
                         </select>
                         <Button type="submit" size="sm" variant="outline">
+                          <Save className="h-4 w-4" />
                           Salvar
                         </Button>
                       </form>
@@ -153,6 +160,7 @@ export default async function UsuariosPage({
                           variant="destructive"
                           disabled={m.role === "owner" && currentRole !== "owner"}
                         >
+                          <Trash2 className="h-4 w-4" />
                           Remover
                         </Button>
                       </form>

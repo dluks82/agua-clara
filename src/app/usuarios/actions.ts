@@ -17,7 +17,7 @@ const inviteSchema = z.object({
   role: roleSchema,
 });
 
-function redirectUsuarios(params: { ok?: string; error?: string }) {
+function redirectUsuarios(params: { ok?: string; error?: string }): never {
   const search = new URLSearchParams();
   if (params.ok) search.set("ok", params.ok);
   if (params.error) search.set("error", params.error);

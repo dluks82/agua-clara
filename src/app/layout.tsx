@@ -4,6 +4,10 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AccountActions } from "@/components/account-actions";
 import { clearActiveTenant } from "@/app/actions";
+import { cookies } from "next/headers";
+import { db } from "@/db";
+import { tenants } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +21,14 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const tenantNamePromise = (async () => {
+    const cookieStore = await cookies();
+    const tenantId = cookieStore.get("ac_tenant")?.value;
+    if (!tenantId) return null;
+    const row = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
+    return row?.name ?? null;
+  })();
+
   return (
     <html lang="pt-BR">
       <body className={inter.className}>
@@ -40,7 +52,10 @@ export default function RootLayout({
                       Configurações
                     </a>
                   </div>
-                  <AccountActions clearTenantAction={clearActiveTenant} />
+                  <AccountActions
+                    clearTenantAction={clearActiveTenant}
+                    tenantNamePromise={tenantNamePromise}
+                  />
                 </div>
               </div>
             </div>

@@ -22,33 +22,47 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, account, profile }) {
       if (!token.email) return token;
 
-      const existing = await db.query.users.findFirst({
-        where: eq(users.email, token.email),
-      });
+      let existing: typeof users.$inferSelect | null = null;
+      try {
+        existing =
+          (await db.query.users.findFirst({
+            where: eq(users.email, token.email),
+          })) ?? null;
+      } catch {
+        return token;
+      }
 
       if (!existing && account?.provider === "google" && profile) {
-        const id = crypto.randomUUID();
-        await db.insert(users).values({
-          id,
-          email: token.email,
-          name: typeof profile.name === "string" ? profile.name : null,
-          image:
-            typeof (profile as { picture?: unknown }).picture === "string"
-              ? (profile as { picture?: string }).picture
-              : null,
-          google_sub: account.providerAccountId,
-        });
-        token.userId = id;
-        return token;
+        try {
+          const id = crypto.randomUUID();
+          await db.insert(users).values({
+            id,
+            email: token.email,
+            name: typeof profile.name === "string" ? profile.name : null,
+            image:
+              typeof (profile as { picture?: unknown }).picture === "string"
+                ? (profile as { picture?: string }).picture
+                : null,
+            google_sub: account.providerAccountId,
+          });
+          token.userId = id;
+          return token;
+        } catch {
+          return token;
+        }
       }
 
       if (existing) {
         token.userId = existing.id;
         if (account?.provider === "google" && !existing.google_sub) {
-          await db
-            .update(users)
-            .set({ google_sub: account?.providerAccountId })
-            .where(eq(users.id, existing.id));
+          try {
+            await db
+              .update(users)
+              .set({ google_sub: account?.providerAccountId })
+              .where(eq(users.id, existing.id));
+          } catch {
+            // ignore
+          }
         }
       }
 

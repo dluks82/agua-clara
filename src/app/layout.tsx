@@ -29,14 +29,20 @@ export default async function RootLayout({
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
-  const [tenantRow, membershipRow] = await Promise.all([
-    tenantId ? db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) }) : Promise.resolve(null),
-    tenantId && userId
-      ? db.query.memberships.findFirst({
-          where: and(eq(memberships.user_id, userId), eq(memberships.tenant_id, tenantId)),
-        })
-      : Promise.resolve(null),
-  ]);
+  const [tenantRow, membershipRow] = await (async () => {
+    try {
+      return await Promise.all([
+        tenantId ? db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) }) : Promise.resolve(null),
+        tenantId && userId
+          ? db.query.memberships.findFirst({
+              where: and(eq(memberships.user_id, userId), eq(memberships.tenant_id, tenantId)),
+            })
+          : Promise.resolve(null),
+      ]);
+    } catch {
+      return [null, null] as const;
+    }
+  })();
 
   const tenantName = tenantRow?.name ?? null;
   const showAdminLinks = membershipRow?.role === "owner" || membershipRow?.role === "admin";

@@ -67,6 +67,36 @@ export async function getMigrationStatus() {
     lastAppliedAt,
     pendingCount: pendingJournalEntries.length,
     pendingTags: pendingJournalEntries.map((entry) => entry.tag),
+    canBaseline: lastAppliedMillis === null && journalEntries.length > 0,
   };
 }
 
+export async function baselineMigrations() {
+  const migrationsFolder = getMigrationsFolder();
+  const metas = readMigrationFiles({ migrationsFolder });
+
+  await db.$client`CREATE SCHEMA IF NOT EXISTS drizzle`;
+  await db.$client`
+    CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (
+      id SERIAL PRIMARY KEY,
+      hash text NOT NULL,
+      created_at bigint
+    )
+  `;
+
+  const existing = await db.$client<{ created_at: string }[]>`
+    select created_at
+    from drizzle.__drizzle_migrations
+  `;
+  const existingMillis = new Set(existing.map((row) => Number(row.created_at)));
+
+  for (const meta of metas) {
+    if (existingMillis.has(meta.folderMillis)) continue;
+    await db.$client`
+      insert into drizzle.__drizzle_migrations ("hash", "created_at")
+      values (${meta.hash}, ${meta.folderMillis})
+    `;
+  }
+
+  return getMigrationStatus();
+}

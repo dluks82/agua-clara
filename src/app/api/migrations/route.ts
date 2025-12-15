@@ -4,7 +4,7 @@ import path from "node:path";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 
 import { db } from "@/db";
-import { getMigrationStatus } from "@/lib/migrations";
+import { baselineMigrations, getMigrationStatus } from "@/lib/migrations";
 
 function requireMigrationsAuth(request: NextRequest) {
   const token = process.env.MIGRATIONS_TOKEN;
@@ -33,10 +33,17 @@ export async function POST(request: NextRequest) {
   const auth = requireMigrationsAuth(request);
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
+  const body = await request.json().catch(() => ({}));
+  const mode = typeof body?.mode === "string" ? body.mode : "apply";
+
+  if (mode === "baseline") {
+    const status = await baselineMigrations();
+    return NextResponse.json({ baselined: true, ...status });
+  }
+
   const migrationsFolder = path.join(process.cwd(), "drizzle");
   await migrate(db, { migrationsFolder });
 
   const status = await getMigrationStatus();
   return NextResponse.json({ applied: true, ...status });
 }
-

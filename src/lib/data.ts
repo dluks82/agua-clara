@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { readings, Reading } from "@/db/schema";
-import { desc, gte, lte, and, lt, gt, asc } from "drizzle-orm";
+import { readings, settings, Reading } from "@/db/schema";
+import { desc, gte, lte, and, lt, gt, asc, eq } from "drizzle-orm";
 import { calculateIntervals, calculateKPIs } from "@/lib/calculations";
 import { detectAlerts, calculateBaseline } from "@/lib/alerts";
 import { getBillingCycleDay } from "@/app/actions";
@@ -31,7 +31,7 @@ function interpolateReading(targetDate: Date, prev: Reading, next: Reading): Rea
   };
 }
 
-export async function getDashboardData(filter?: PeriodFilter) {
+export async function getDashboardData(tenantId: string, filter?: PeriodFilter) {
   try {
     let startDate: Date;
     let endDate: Date = new Date();
@@ -96,17 +96,23 @@ export async function getDashboardData(filter?: PeriodFilter) {
     const readingsInRange = await db
       .select()
       .from(readings)
-      .where(and(gte(readings.ts, startDate), lte(readings.ts, endDate)))
+      .where(
+        and(
+          eq(readings.tenant_id, tenantId),
+          gte(readings.ts, startDate),
+          lte(readings.ts, endDate)
+        )
+      )
       .orderBy(asc(readings.ts)); // Ascending for easier processing
 
     // 3. Fetch Boundary Readings
     const readingBefore = await db.query.readings.findFirst({
-      where: lt(readings.ts, startDate),
+      where: and(eq(readings.tenant_id, tenantId), lt(readings.ts, startDate)),
       orderBy: [desc(readings.ts)],
     });
 
     const readingAfter = await db.query.readings.findFirst({
-      where: gt(readings.ts, endDate),
+      where: and(eq(readings.tenant_id, tenantId), gt(readings.ts, endDate)),
       orderBy: [asc(readings.ts)],
     });
 
@@ -142,10 +148,19 @@ export async function getDashboardData(filter?: PeriodFilter) {
     // Sort descending for UI/Calculations as expected by other functions
     finalReadings.sort((a, b) => b.ts.getTime() - a.ts.getTime());
 
+    const settingsData = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.tenant_id, tenantId));
+    const settingsObject = settingsData.reduce((acc, setting) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    }, {} as Record<string, string>);
+
     const intervals = calculateIntervals(finalReadings);
     const kpis = calculateKPIs(intervals);
-    const baseline = calculateBaseline(intervals);
-    const alerts = detectAlerts(intervals, baseline || undefined);
+    const baseline = calculateBaseline(intervals, 7, settingsObject);
+    const alerts = detectAlerts(intervals, baseline || undefined, settingsObject);
     
     return {
       readings: finalReadings,

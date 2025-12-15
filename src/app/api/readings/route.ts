@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { readings } from "@/db/schema";
 import { createReadingSchema, getReadingsSchema } from "@/lib/validations/readings";
-import { desc, and, gte, lte } from "drizzle-orm";
+import { desc, and, gte, lte, eq, sql } from "drizzle-orm";
+import { requireTenantRole } from "@/lib/api-rbac";
 
 export async function POST(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "operator");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const body = await request.json();
     const validatedData = createReadingSchema.parse(body);
@@ -13,6 +17,7 @@ export async function POST(request: NextRequest) {
     const lastReading = await db
       .select()
       .from(readings)
+      .where(eq(readings.tenant_id, ctx.tenantId))
       .orderBy(desc(readings.ts))
       .limit(1);
     
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest) {
     const newReading = await db
       .insert(readings)
       .values({
+        tenant_id: ctx.tenantId,
         ts: new Date(validatedData.ts),
         hydrometer_m3: validatedData.hydrometer_m3.toString(),
         horimeter_h: validatedData.horimeter_h.toString(),
@@ -70,6 +76,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "viewer");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const { searchParams } = new URL(request.url);
     const validatedParams = getReadingsSchema.parse({
@@ -81,7 +90,7 @@ export async function GET(request: NextRequest) {
     
     const offset = (validatedParams.page - 1) * validatedParams.limit;
     
-    const whereConditions = [];
+    const whereConditions = [eq(readings.tenant_id, ctx.tenantId)];
     
     if (validatedParams.from) {
       whereConditions.push(gte(readings.ts, new Date(validatedParams.from)));
@@ -91,25 +100,24 @@ export async function GET(request: NextRequest) {
       whereConditions.push(lte(readings.ts, new Date(validatedParams.to)));
     }
     
-    const [items, totalCount] = await Promise.all([
+    const [items, totalRows] = await Promise.all([
       db
         .select()
         .from(readings)
-        .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+        .where(and(...whereConditions))
         .orderBy(desc(readings.ts))
         .limit(validatedParams.limit)
         .offset(offset),
       db
-        .select({ count: readings.id })
+        .select({ count: sql<number>`count(*)` })
         .from(readings)
-        .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-        .then(result => result.length),
+        .where(and(...whereConditions))
     ]);
     
     return NextResponse.json({
       items,
       page: validatedParams.page,
-      total: totalCount,
+      total: Number(totalRows[0]?.count ?? 0),
     });
   } catch (error) {
     if (error instanceof Error) {

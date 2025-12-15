@@ -13,6 +13,9 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:baseline": "node scripts/db-baseline.mjs",
+    "db:status": "node scripts/db-status.mjs",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -33,6 +36,7 @@
     "drizzle-orm": "^0.44.6",
     "lucide-react": "^0.546.0",
     "next": "15.5.9",
+    "next-auth": "4.24.13",
     "postgres": "^3.4.7",
     "react": "19.1.0",
     "react-day-picker": "^9.11.1",

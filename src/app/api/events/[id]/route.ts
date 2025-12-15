@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { events } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { requireTenantRole } from "@/lib/api-rbac";
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const ctx = await requireTenantRole(request, "operator");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const { id } = await params;
     const eventId = parseInt(id);
@@ -22,7 +26,7 @@ export async function DELETE(
     const existingEvent = await db
       .select()
       .from(events)
-      .where(eq(events.id, eventId))
+      .where(and(eq(events.id, eventId), eq(events.tenant_id, ctx.tenantId)))
       .limit(1);
 
     if (existingEvent.length === 0) {
@@ -35,7 +39,7 @@ export async function DELETE(
     // Excluir o evento
     await db
       .delete(events)
-      .where(eq(events.id, eventId));
+      .where(and(eq(events.id, eventId), eq(events.tenant_id, ctx.tenantId)));
 
     return NextResponse.json(
       { message: "Evento excluído com sucesso" },

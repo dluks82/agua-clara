@@ -13,6 +13,9 @@ jobs:
       DATABASE_URL: postgresql://user:pass@localhost:5432/agua_clara
       NEXT_PUBLIC_APP_NAME: Agua Clara
       NEXT_PUBLIC_APP_DESCRIPTION: Sistema de Monitoramento de Agua
+      AUTH_SECRET: ci_dummy_secret
+      AUTH_GOOGLE_ID: ci_dummy_google_id
+      AUTH_GOOGLE_SECRET: ci_dummy_google_secret
     steps:
       - name: Checkout
         uses: actions/checkout@v4

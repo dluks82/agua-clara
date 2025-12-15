@@ -36,6 +36,19 @@ async function applyMigrations(token: string): Promise<MigrationStatus> {
     headers: {
       authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ mode: "apply" }),
+  });
+
+  return response.json();
+}
+
+async function baselineMigrations(token: string): Promise<MigrationStatus> {
+  const response = await fetch("/api/migrations", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ mode: "baseline" }),
   });
 
   return response.json();
@@ -125,10 +138,26 @@ export function MigrationsClient() {
             >
               Aplicar migrations
             </Button>
+
+            {status.lastAppliedAt === null && status.pendingCount > 0 && (
+              <Button
+                variant="outline"
+                disabled={!canQuery}
+                onClick={async () => {
+                  setIsApplying(true);
+                  try {
+                    setStatus(await baselineMigrations(normalized));
+                  } finally {
+                    setIsApplying(false);
+                  }
+                }}
+              >
+                Marcar como aplicadas (baseline)
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
-

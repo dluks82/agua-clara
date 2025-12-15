@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { events } from "@/db/schema";
 import { desc, and, gte, lte, eq } from "drizzle-orm";
+import { requireTenantRole } from "@/lib/api-rbac";
 
 function normalizeJsonbPayload(payload: unknown): unknown | null {
   if (payload === undefined || payload === null) return null;
@@ -16,13 +17,16 @@ function normalizeJsonbPayload(payload: unknown): unknown | null {
 }
 
 export async function GET(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "viewer");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const { searchParams } = new URL(request.url);
     const from = searchParams.get("from");
     const to = searchParams.get("to");
     const type = searchParams.get("type");
     
-    const whereConditions = [];
+    const whereConditions = [eq(events.tenant_id, ctx.tenantId)];
     
     if (from) {
       whereConditions.push(gte(events.ts, new Date(from)));
@@ -39,7 +43,7 @@ export async function GET(request: NextRequest) {
     const eventsData = await db
       .select()
       .from(events)
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .where(and(...whereConditions))
       .orderBy(desc(events.ts));
 
     const normalized = eventsData.map((event) => ({
@@ -58,6 +62,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "operator");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const body = await request.json();
     const { ts, type, payload } = body;
@@ -88,6 +95,7 @@ export async function POST(request: NextRequest) {
     const newEvent = await db
       .insert(events)
       .values({
+        tenant_id: ctx.tenantId,
         ts: new Date(ts),
         type,
         payload: normalizeJsonbPayload(payload),
@@ -105,6 +113,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const ctx = await requireTenantRole(request, "operator");
+  if (ctx instanceof NextResponse) return ctx;
+
   try {
     const body = await request.json();
     const { id, ts, type, payload } = body;
@@ -136,7 +147,7 @@ export async function PUT(request: NextRequest) {
     const existingEvent = await db
       .select()
       .from(events)
-      .where(eq(events.id, id))
+      .where(and(eq(events.id, id), eq(events.tenant_id, ctx.tenantId)))
       .limit(1);
     
     if (existingEvent.length === 0) {
@@ -154,7 +165,7 @@ export async function PUT(request: NextRequest) {
         type,
         payload: normalizeJsonbPayload(payload),
       })
-      .where(eq(events.id, id))
+      .where(and(eq(events.id, id), eq(events.tenant_id, ctx.tenantId)))
       .returning();
     
     return NextResponse.json(

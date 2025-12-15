@@ -60,10 +60,13 @@ NEXT_PUBLIC_APP_DESCRIPTION="Sistema de Monitoramento de Água"
 ### 3. Configurar Banco de Dados
 
 ```bash
-# Gerar migrations
+# Gerar migrations (quando mudar schema)
 npm run db:generate
 
-# Aplicar migrations
+# Aplicar migrations (recomendado; registra drizzle.__drizzle_migrations)
+npm run db:migrate
+
+# (Opcional) Sincronizar schema sem migrations (dev/rápido)
 npm run db:push
 
 # Abrir Drizzle Studio (opcional)

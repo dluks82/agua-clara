@@ -12,6 +12,7 @@ type LinkRow = {
   expires_at: string;
   revoked_at: string | null;
   status: "active" | "expired" | "revoked";
+  url: string | null;
 };
 
 export function PublicDashboardLinks() {
@@ -156,6 +157,15 @@ export function PublicDashboardLinks() {
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={!item.url}
+                          onClick={() => (item.url ? void copy(item.url) : undefined)}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Copiar link
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           disabled={item.status !== "active"}
                           onClick={() => void revoke(item.id)}
                         >
@@ -173,4 +183,3 @@ export function PublicDashboardLinks() {
     </Card>
   );
 }
-

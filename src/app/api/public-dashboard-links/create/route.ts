@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 import { db } from "@/db";
 import { publicDashboardLinks } from "@/db/schema";
 import { requireTenantRole } from "@/lib/api-rbac";
-import { generatePublicToken, hashPublicToken } from "@/lib/public-dashboard";
+import { encryptPublicToken, generatePublicToken, hashPublicToken } from "@/lib/public-dashboard";
 
 export async function POST(request: NextRequest) {
   const ctx = await requireTenantRole(request, "admin");
@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     id,
     tenant_id: ctx.tenantId,
     token_hash: tokenHash,
+    token_enc: encryptPublicToken(token),
     expires_at: expiresAt,
   });
 

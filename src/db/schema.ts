@@ -91,6 +91,7 @@ export const publicDashboardLinks = pgTable(
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
     token_hash: text("token_hash").notNull().unique(),
+    token_enc: text("token_enc"),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
     revoked_at: timestamp("revoked_at", { withTimezone: true }),

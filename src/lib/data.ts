@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { readings, settings, Reading } from "@/db/schema";
-import { desc, gte, lte, and, lt, gt, asc, eq } from "drizzle-orm";
+import { sql, desc, gte, lte, and, lt, gt, eq } from "drizzle-orm";
 import { calculateIntervals, calculateKPIs } from "@/lib/calculations";
 import { detectAlerts, calculateBaseline } from "@/lib/alerts";
 
@@ -84,29 +84,51 @@ export async function getDashboardData(tenantId: string, period: DashboardPeriod
     const startDate = period.from;
     const endDate = period.to;
 
-    // 2. Fetch Readings in Range
-    const readingsInRange = await db
-      .select()
-      .from(readings)
-      .where(
-        and(
-          eq(readings.tenant_id, tenantId),
-          gte(readings.ts, startDate),
-          lte(readings.ts, endDate)
-        )
+    const readingColumns = [
+      readings.id,
+      readings.tenant_id,
+      readings.ts,
+      readings.hydrometer_m3,
+      readings.horimeter_h,
+      readings.notes,
+      readings.hydrometer_status,
+      readings.horimeter_status,
+      readings.hydrometer_final_old,
+      readings.hydrometer_initial_new,
+      readings.horimeter_final_old,
+      readings.horimeter_initial_new,
+    ];
+
+    // 2. Fetch Readings + Boundaries (single query)
+    const readingsQuery = await db.execute(sql`
+      (
+        select ${sql.join(readingColumns, sql`, `)}
+        from ${readings}
+        where ${and(eq(readings.tenant_id, tenantId), gte(readings.ts, startDate), lte(readings.ts, endDate))}
       )
-      .orderBy(asc(readings.ts)); // Ascending for easier processing
+      union all
+      (
+        select ${sql.join(readingColumns, sql`, `)}
+        from ${readings}
+        where ${and(eq(readings.tenant_id, tenantId), lt(readings.ts, startDate))}
+        order by ${desc(readings.ts)}
+        limit 1
+      )
+      union all
+      (
+        select ${sql.join(readingColumns, sql`, `)}
+        from ${readings}
+        where ${and(eq(readings.tenant_id, tenantId), gt(readings.ts, endDate))}
+        order by ${readings.ts} asc
+        limit 1
+      )
+      order by ts asc
+    `);
 
-    // 3. Fetch Boundary Readings
-    const readingBefore = await db.query.readings.findFirst({
-      where: and(eq(readings.tenant_id, tenantId), lt(readings.ts, startDate)),
-      orderBy: [desc(readings.ts)],
-    });
-
-    const readingAfter = await db.query.readings.findFirst({
-      where: and(eq(readings.tenant_id, tenantId), gt(readings.ts, endDate)),
-      orderBy: [asc(readings.ts)],
-    });
+    const allReadings = readingsQuery as unknown as Reading[];
+    const readingsInRange = allReadings.filter((r) => r.ts >= startDate && r.ts <= endDate);
+    const readingBefore = allReadings.find((r) => r.ts < startDate);
+    const readingAfter = allReadings.find((r) => r.ts > endDate);
 
     // 4. Construct Final List with Virtual Readings
     const finalReadings = [...readingsInRange];

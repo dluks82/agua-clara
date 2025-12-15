@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ReadingForm } from "@/components/reading-form";
 import { ReadingsList } from "@/components/readings-list";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 
 export default function LeiturasClient({ canWrite }: { canWrite: boolean }) {
@@ -29,14 +29,15 @@ export default function LeiturasClient({ canWrite }: { canWrite: boolean }) {
         {canWrite && (
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto" aria-label="Nova leitura">
                 <Plus className="mr-2 h-4 w-4" />
-                Nova Leitura
+                Nova leitura
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Nova Leitura</DialogTitle>
+                <DialogDescription>Preencha os campos para cadastrar uma nova leitura.</DialogDescription>
               </DialogHeader>
               <ReadingForm onSuccess={handleFormSuccess} />
             </DialogContent>

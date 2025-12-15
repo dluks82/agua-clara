@@ -77,13 +77,13 @@ export default async function UsuariosPage({
                 <div className="text-sm font-medium">{m.email}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{m.name ?? "—"}</div>
 
-                <div className="mt-3 space-y-2">
-                  <form action={updateMemberRole} className="flex items-center gap-2">
+                <div className="mt-3 grid grid-cols-[1fr_auto_auto] items-stretch gap-2">
+                  <form action={updateMemberRole} className="col-span-2 flex items-stretch gap-2">
                     <input type="hidden" name="userId" value={m.userId} />
                     <select
                       name="role"
                       defaultValue={m.role}
-                      className="flex-1 rounded-md border px-2 py-2 text-sm"
+                      className="h-9 flex-1 rounded-md border px-2 text-sm"
                       disabled={m.role === "owner" && currentRole !== "owner"}
                     >
                       <option value="viewer">viewer</option>
@@ -93,25 +93,28 @@ export default async function UsuariosPage({
                     </select>
                     <SubmitButton
                       type="submit"
-                      size="sm"
-                      variant="outline"
+                      variant="default"
+                      size="icon"
+                      aria-label="Salvar"
+                      title="Salvar"
                       icon={<Save className="h-4 w-4" />}
-                      label="Salvar"
-                      pendingLabel="Salvando..."
+                      label={<span className="sr-only">Salvar</span>}
+                      pendingLabel={<span className="sr-only">Salvando...</span>}
                     />
                   </form>
 
-                  <form action={removeMember}>
+                  <form action={removeMember} className="flex">
                     <input type="hidden" name="userId" value={m.userId} />
                     <SubmitButton
                       type="submit"
-                      size="sm"
                       variant="destructive"
-                      className="w-full"
+                      size="icon"
+                      aria-label="Remover"
+                      title="Remover"
                       disabled={m.role === "owner" && currentRole !== "owner"}
                       icon={<Trash2 className="h-4 w-4" />}
-                      label="Remover"
-                      pendingLabel="Removendo..."
+                      label={<span className="sr-only">Remover</span>}
+                      pendingLabel={<span className="sr-only">Removendo...</span>}
                     />
                   </form>
                 </div>
@@ -129,7 +132,6 @@ export default async function UsuariosPage({
                   <th className="py-2">Email</th>
                   <th className="py-2">Nome</th>
                   <th className="py-2">Papel</th>
-                  <th className="py-2 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,48 +140,53 @@ export default async function UsuariosPage({
                     <td className="py-2">{m.email}</td>
                     <td className="py-2">{m.name ?? "—"}</td>
                     <td className="py-2">
-                      <form action={updateMemberRole} className="flex items-center gap-2">
-                        <input type="hidden" name="userId" value={m.userId} />
-                        <select
-                          name="role"
-                          defaultValue={m.role}
-                          className="rounded-md border px-2 py-1 text-sm"
-                          disabled={m.role === "owner" && currentRole !== "owner"}
-                        >
-                          <option value="viewer">viewer</option>
-                          <option value="operator">operator</option>
-                          <option value="admin">admin</option>
-                          <option value="owner">owner</option>
-                        </select>
-                        <SubmitButton
-                          type="submit"
-                          size="sm"
-                          variant="outline"
-                          icon={<Save className="h-4 w-4" />}
-                          label="Salvar"
-                          pendingLabel="Salvando..."
-                        />
-                      </form>
-                    </td>
-                    <td className="py-2 text-right">
-                      <form action={removeMember}>
-                        <input type="hidden" name="userId" value={m.userId} />
-                        <SubmitButton
-                          type="submit"
-                          size="sm"
-                          variant="destructive"
-                          disabled={m.role === "owner" && currentRole !== "owner"}
-                          icon={<Trash2 className="h-4 w-4" />}
-                          label="Remover"
-                          pendingLabel="Removendo..."
-                        />
-                      </form>
+                      <div className="flex items-center justify-end gap-2">
+                        <form action={updateMemberRole} className="flex items-center gap-2">
+                          <input type="hidden" name="userId" value={m.userId} />
+                          <select
+                            name="role"
+                            defaultValue={m.role}
+                            className="h-8 w-40 rounded-md border px-2 text-sm"
+                            disabled={m.role === "owner" && currentRole !== "owner"}
+                          >
+                            <option value="viewer">viewer</option>
+                            <option value="operator">operator</option>
+                            <option value="admin">admin</option>
+                            <option value="owner">owner</option>
+                          </select>
+                          <SubmitButton
+                            type="submit"
+                            variant="default"
+                            size="icon-sm"
+                            aria-label="Salvar"
+                            title="Salvar"
+                            icon={<Save className="h-4 w-4" />}
+                            label={<span className="sr-only">Salvar</span>}
+                            pendingLabel={<span className="sr-only">Salvando...</span>}
+                          />
+                        </form>
+
+                        <form action={removeMember}>
+                          <input type="hidden" name="userId" value={m.userId} />
+                          <SubmitButton
+                            type="submit"
+                            variant="destructive"
+                            size="icon-sm"
+                            aria-label="Remover"
+                            title="Remover"
+                            disabled={m.role === "owner" && currentRole !== "owner"}
+                            icon={<Trash2 className="h-4 w-4" />}
+                            label={<span className="sr-only">Remover</span>}
+                            pendingLabel={<span className="sr-only">Removendo...</span>}
+                          />
+                        </form>
+                      </div>
                     </td>
                   </tr>
                 ))}
                 {members.length === 0 && (
                   <tr>
-                    <td className="py-6 text-muted-foreground" colSpan={4}>
+                    <td className="py-6 text-muted-foreground" colSpan={3}>
                       Nenhum membro encontrado.
                     </td>
                   </tr>

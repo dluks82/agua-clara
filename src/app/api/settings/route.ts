@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { requireTenantRole } from "@/lib/api-rbac";
+import { revalidatePath } from "next/cache";
 
 export async function GET(request: NextRequest) {
   const ctx = await requireTenantRole(request, "viewer");
@@ -107,6 +108,9 @@ export async function PUT(request: NextRequest) {
     });
     
     await Promise.all(promises);
+
+    revalidatePath("/dashboard");
+    revalidatePath("/configuracoes");
     
     return NextResponse.json({ message: "Configurações atualizadas com sucesso" });
   } catch (error) {

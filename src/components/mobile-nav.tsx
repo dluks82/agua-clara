@@ -6,7 +6,7 @@ import { MenuIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -35,6 +35,7 @@ export function MobileNav({
       >
         <DialogHeader className="shrink-0 px-4 py-4 text-left">
           <DialogTitle className="text-base">{appName}</DialogTitle>
+          <DialogDescription className="sr-only">Menu de navegação e ações da conta.</DialogDescription>
           {tenantName ? (
             <div className="text-xs text-muted-foreground">{tenantName}</div>
           ) : null}

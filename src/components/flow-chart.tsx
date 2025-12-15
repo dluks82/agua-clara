@@ -1,9 +1,10 @@
 "use client";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ChartFrame } from "@/components/chart-frame";
 
 interface FlowData {
   start: string;
@@ -51,39 +52,34 @@ export function FlowChart({ data }: FlowChartProps) {
         <CardTitle>Gráfico de Vazão</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-            <LineChart data={chartData} width={400} height={300}>
+        <ChartFrame
+          height={300}
+          className="w-full min-w-0"
+          placeholder={<div className="flex h-full items-center justify-center text-muted-foreground">Carregando…</div>}
+        >
+          {({ width, height }) => (
+            <LineChart data={chartData} width={width} height={height}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="dateLabel"
-                tick={{ fontSize: 12 }}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
+              <XAxis dataKey="dateLabel" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={60} />
+              <YAxis
                 label={{ value: "Vazão (L/min)", angle: -90, position: "insideLeft" }}
                 tick={{ fontSize: 12 }}
               />
-              <Tooltip 
-                formatter={(value: number, name: string) => [
-                  `${value.toFixed(1)} L/min`,
-                  "Vazão"
-                ]}
+              <Tooltip
+                formatter={(value: number) => [`${value.toFixed(1)} L/min`, "Vazão"]}
                 labelFormatter={(label) => `Data: ${label}`}
               />
-              <Line 
-                type="monotone" 
-                dataKey="l_min" 
-                stroke="#2563eb" 
+              <Line
+                type="monotone"
+                dataKey="l_min"
+                stroke="#2563eb"
                 strokeWidth={2}
                 dot={{ fill: "#2563eb", strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6, stroke: "#2563eb", strokeWidth: 2 }}
               />
             </LineChart>
-          </ResponsiveContainer>
-        </div>
+          )}
+        </ChartFrame>
       </CardContent>
     </Card>
   );

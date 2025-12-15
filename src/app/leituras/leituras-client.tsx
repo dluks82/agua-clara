@@ -55,7 +55,7 @@ export default function LeiturasClient({ canWrite, billingCycleDay }: { canWrite
                 <DialogTitle>Nova Leitura</DialogTitle>
                 <DialogDescription>Preencha os campos para cadastrar uma nova leitura.</DialogDescription>
               </DialogHeader>
-              <ReadingForm onSuccess={handleFormSuccess} />
+              <ReadingForm embedded onSuccess={handleFormSuccess} />
             </DialogContent>
           </Dialog>
         )}

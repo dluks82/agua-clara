@@ -13,11 +13,12 @@ import { Loader2 } from "lucide-react";
 
 interface ReadingFormProps {
   onSuccess?: () => void;
+  embedded?: boolean;
 }
 
 type EquipmentStatus = "regular" | "rollover" | "exchange";
 
-export function ReadingForm({ onSuccess }: ReadingFormProps) {
+export function ReadingForm({ onSuccess, embedded = false }: ReadingFormProps) {
   const [formData, setFormData] = useState({
     ts: toDatetimeLocalValue(),
     hydrometer_m3: "",
@@ -122,12 +123,8 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Nova Leitura</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <FormContainer embedded={embedded}>
+      <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="ts">Data e Hora</Label>
             <Input
@@ -302,8 +299,19 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {isSubmitting ? "Cadastrando..." : "Cadastrar Leitura"}
           </Button>
-        </form>
-      </CardContent>
+      </form>
+    </FormContainer>
+  );
+}
+
+function FormContainer({ embedded, children }: { embedded: boolean; children: React.ReactNode }) {
+  if (embedded) return <div className="w-full">{children}</div>;
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Nova Leitura</CardTitle>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
     </Card>
   );
 }

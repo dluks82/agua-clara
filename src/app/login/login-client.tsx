@@ -1,19 +1,7 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-
-import { Button } from "@/components/ui/button";
+import { SignInGoogleButton } from "@/components/sign-in-google-button";
 
 export function LoginClient() {
-  return (
-    <Button
-      className="w-full"
-      onClick={() => {
-        void signIn("google", { callbackUrl: "/select-tenant" });
-      }}
-    >
-      Entrar com Google
-    </Button>
-  );
+  return <SignInGoogleButton className="w-full" label="Entrar com Google" callbackUrl="/select-tenant" />;
 }
-

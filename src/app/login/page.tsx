@@ -9,19 +9,18 @@ export default async function LoginPage() {
   if (session?.user?.id) redirect("/select-tenant");
 
   return (
-    <div className="mx-auto w-full max-w-md">
-      <Card>
-        <CardHeader>
-          <CardTitle>Entrar</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-sm text-muted-foreground">
-            Use sua conta Google para acessar.
-          </div>
-          <LoginClient />
-        </CardContent>
-      </Card>
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="w-full max-w-md">
+        <Card>
+          <CardHeader>
+            <CardTitle>Entrar</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-muted-foreground">Use sua conta Google para acessar.</div>
+            <LoginClient />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
-

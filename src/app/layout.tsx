@@ -3,19 +3,26 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AccountActions } from "@/components/account-actions";
-import { clearActiveTenant } from "@/app/actions";
 import { cookies } from "next/headers";
 import { db } from "@/db";
 import { memberships, tenants } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { MobileNav } from "@/components/mobile-nav";
+import { SignInGoogleButton } from "@/components/sign-in-google-button";
+import { OrganizationSwitcher } from "@/components/organization-switcher";
+import { selectTenant } from "@/app/select-tenant/actions";
+import { NavLinks } from "@/components/nav-links";
+import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Água Clara - Sistema de Monitoramento",
   description: "Sistema de monitoramento operacional do consumo de água",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default async function RootLayout({
@@ -28,6 +35,7 @@ export default async function RootLayout({
 
   const session = await auth();
   const userId = session?.user?.id ?? null;
+  const isAuthed = Boolean(userId);
 
   const [tenantRow, membershipRow] = await (async () => {
     try {
@@ -47,75 +55,77 @@ export default async function RootLayout({
   const tenantName = tenantRow?.name ?? null;
   const showAdminLinks = membershipRow?.role === "owner" || membershipRow?.role === "admin";
 
+  const organizations = await (async () => {
+    if (!userId) return [] as Array<{ id: string; name: string; role: string }>;
+    try {
+      return await db
+        .select({
+          id: memberships.tenant_id,
+          name: tenants.name,
+          role: memberships.role,
+        })
+        .from(memberships)
+        .innerJoin(tenants, eq(tenants.id, memberships.tenant_id))
+        .where(eq(memberships.user_id, userId))
+        .orderBy(tenants.name);
+    } catch {
+      return [] as Array<{ id: string; name: string; role: string }>;
+    }
+  })();
+
   return (
     <html lang="pt-BR">
       <body className={inter.className}>
         <div className="min-h-screen bg-background">
-          <nav className="border-b">
+          <nav className="fixed inset-x-0 top-0 z-50 border-b bg-background/90 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/70">
             <div className="container mx-auto px-4 py-3 sm:py-4">
               <div className="flex items-center justify-between">
                 <div className="leading-tight">
-                  <h1 className="text-xl font-bold text-primary sm:text-2xl">Água Clara</h1>
-                  <TenantName tenantName={tenantName} />
+                  <div className="flex items-center gap-2">
+                    <Image src="/logo.svg" alt="Água Clara" width={28} height={28} priority />
+                    <h1 className="text-xl font-bold text-primary sm:text-2xl">Água Clara</h1>
+                  </div>
+                  {isAuthed ? (
+                    <OrganizationSwitcher
+                      activeOrganizationId={tenantId}
+                      activeOrganizationName={tenantName}
+                      organizations={organizations}
+                      selectOrganizationAction={selectTenant}
+                    />
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-2 sm:gap-6">
                   <div className="sm:hidden">
-                    <MobileNav
-                      appName="Água Clara"
-                      tenantName={tenantName}
-                      showAdminLinks={showAdminLinks}
-                      clearTenantAction={clearActiveTenant}
-                    />
+                    {isAuthed ? (
+                      <MobileNav
+                        appName="Água Clara"
+                        tenantName={tenantName}
+                        showAdminLinks={showAdminLinks}
+                      />
+                    ) : (
+                      <SignInGoogleButton label="Entrar" variant="outline" size="sm" callbackUrl="/select-tenant" />
+                    )}
                   </div>
                   <div className="hidden items-center gap-6 sm:flex">
-                    <div className="flex space-x-4">
-                      <a href="/dashboard" className="text-sm hover:text-primary">
-                        Dashboard
-                      </a>
-                      <a href="/leituras" className="text-sm hover:text-primary">
-                        Leituras
-                      </a>
-                      <a href="/eventos" className="text-sm hover:text-primary">
-                        Eventos
-                      </a>
-                      <ConfigLink show={showAdminLinks} />
-                      <UsersLink show={showAdminLinks} />
-                    </div>
-                    <AccountActions clearTenantAction={clearActiveTenant} />
+                    {isAuthed ? (
+                      <>
+                        <NavLinks showAdminLinks={showAdminLinks} />
+                        <AccountActions />
+                      </>
+                    ) : (
+                      <SignInGoogleButton label="Entrar" variant="outline" size="sm" callbackUrl="/select-tenant" />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </nav>
-          <main className="container mx-auto px-4 py-4 sm:py-8">
+          <main className="container mx-auto px-4 pt-24 pb-6 sm:pt-28 sm:pb-8">
             {children}
             <Toaster />
           </main>
         </div>
       </body>
     </html>
-  );
-}
-
-function TenantName({ tenantName }: { tenantName: string | null }) {
-  if (!tenantName) return null;
-  return <div className="text-xs text-muted-foreground">{tenantName}</div>;
-}
-
-function UsersLink({ show }: { show: boolean }) {
-  if (!show) return null;
-  return (
-    <a href="/usuarios" className="text-sm hover:text-primary">
-      Usuários
-    </a>
-  );
-}
-
-function ConfigLink({ show }: { show: boolean }) {
-  if (!show) return null;
-  return (
-    <a href="/configuracoes" className="text-sm hover:text-primary">
-      Configurações
-    </a>
   );
 }

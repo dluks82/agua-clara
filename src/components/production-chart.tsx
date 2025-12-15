@@ -26,9 +26,12 @@ interface DailyProduction {
 
 interface ProductionChartProps {
   data: ProductionData[];
+  periodFrom?: string;
+  periodTo?: string;
+  showForecast?: boolean;
 }
 
-export function ProductionChart({ data }: ProductionChartProps) {
+export function ProductionChart({ data, periodFrom, periodTo, showForecast = true }: ProductionChartProps) {
   if (data.length === 0) {
     return (
       <Card>
@@ -172,7 +175,7 @@ export function ProductionChart({ data }: ProductionChartProps) {
 
   // Projetar próximos 7 dias baseado na média dos últimos 7 dias
   const lastReading = data[data.length - 1];
-  if (lastReading) {
+  if (showForecast && lastReading) {
     const lastDate = new Date(lastReading.end);
     const recentDays = Object.values(dailyProduction).slice(-7);
     const avgProduction = recentDays.length > 0 
@@ -194,7 +197,7 @@ export function ProductionChart({ data }: ProductionChartProps) {
     }
   }
 
-  const chartData = Object.values(dailyProduction)
+  let chartData = Object.values(dailyProduction)
     .sort((a, b) => a.date.localeCompare(b.date))
     .map(item => ({
       ...item,
@@ -202,6 +205,12 @@ export function ProductionChart({ data }: ProductionChartProps) {
       estimatedProduction: item.isEstimated && !item.isForecast ? item.production : 0,
       forecastProduction: item.isForecast ? item.production : 0,
     }));
+
+  if (periodFrom && periodTo) {
+    const fromKey = format(new Date(periodFrom), "yyyy-MM-dd");
+    const toKey = format(new Date(periodTo), "yyyy-MM-dd");
+    chartData = chartData.filter((item) => item.date >= fromKey && item.date <= toKey);
+  }
 
   // Verificar se há dados estimados
   const hasEstimatedData = chartData.some(item => item.isEstimated);

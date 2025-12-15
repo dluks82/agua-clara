@@ -38,6 +38,9 @@ export default async function DashboardPage({
     billingCycleDay,
   });
 
+  const now = new Date();
+  const showForecast = period.from <= now && now <= period.to;
+
   const data = await getCachedDashboardData(tenantId)(period.from.toISOString(), period.to.toISOString());
   const canWrite = role !== "viewer";
 
@@ -241,7 +244,12 @@ export default async function DashboardPage({
           </Card>
         </div>
         
-        <DashboardCharts intervals={data.intervals} />
+        <DashboardCharts
+          intervals={data.intervals}
+          periodFrom={period.from.toISOString()}
+          periodTo={period.to.toISOString()}
+          showForecast={showForecast}
+        />
       </div>
     </TooltipProvider>
   );

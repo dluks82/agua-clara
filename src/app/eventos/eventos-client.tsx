@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
 import { HelpHint } from "@/components/help-hint";
+import { DateRangeFilter } from "@/components/date-range-filter";
 
 interface Event {
   id: number;
@@ -35,7 +37,7 @@ interface EventFormData {
   details: string;
 }
 
-export default function EventosClient({ canWrite }: { canWrite: boolean }) {
+export default function EventosClient({ canWrite, billingCycleDay }: { canWrite: boolean; billingCycleDay: number }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -44,6 +46,20 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from") ?? undefined;
+  const to = searchParams.get("to") ?? undefined;
+
+  const setRange = (next: { from?: string; to?: string }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next.from) params.set("from", next.from);
+    else params.delete("from");
+    if (next.to) params.set("to", next.to);
+    else params.delete("to");
+    router.replace(`/eventos?${params.toString()}`);
+  };
   
   const [formData, setFormData] = useState<EventFormData>({
     ts: toDatetimeLocalValue(),
@@ -78,10 +94,13 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
     return next;
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/events");
+      const params = new URLSearchParams();
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      const response = await fetch(`/api/events?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error("Erro ao carregar eventos");
@@ -97,7 +116,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [from, to]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,7 +295,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
 
   if (loading) {
     return (
@@ -419,6 +438,10 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
               </DialogContent>
             </Dialog>
           )}
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <DateRangeFilter billingCycleDay={billingCycleDay} value={{ from, to }} onChange={setRange} />
         </div>
 
         {message && (

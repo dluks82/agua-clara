@@ -125,7 +125,11 @@ export async function getDashboardData(tenantId: string, period: DashboardPeriod
       order by ts asc
     `);
 
-    const allReadings = readingsQuery as unknown as Reading[];
+    type DbReadingRow = Omit<Reading, "ts"> & { ts: Date | string };
+    const allReadings = (readingsQuery as unknown as DbReadingRow[]).map((row) => ({
+      ...row,
+      ts: row.ts instanceof Date ? row.ts : new Date(row.ts),
+    })) as Reading[];
     const readingsInRange = allReadings.filter((r) => r.ts >= startDate && r.ts <= endDate);
     const readingBefore = allReadings.find((r) => r.ts < startDate);
     const readingAfter = allReadings.find((r) => r.ts > endDate);

@@ -70,7 +70,7 @@ export function MobileNav({
               className="w-full justify-start"
               onClick={() => {
                 setOpen(false);
-                void signOut({ callbackUrl: "/login" });
+                void signOut({ callbackUrl: "/" });
               }}
             >
               Sair

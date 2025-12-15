@@ -13,12 +13,16 @@ import { SignInGoogleButton } from "@/components/sign-in-google-button";
 import { OrganizationSwitcher } from "@/components/organization-switcher";
 import { selectTenant } from "@/app/select-tenant/actions";
 import { NavLinks } from "@/components/nav-links";
+import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Água Clara - Sistema de Monitoramento",
   description: "Sistema de monitoramento operacional do consumo de água",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default async function RootLayout({
@@ -73,11 +77,14 @@ export default async function RootLayout({
     <html lang="pt-BR">
       <body className={inter.className}>
         <div className="min-h-screen bg-background">
-          <nav className="fixed inset-x-0 top-0 z-50 border-b bg-background">
+          <nav className="fixed inset-x-0 top-0 z-50 border-b bg-background/90 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/70">
             <div className="container mx-auto px-4 py-3 sm:py-4">
               <div className="flex items-center justify-between">
                 <div className="leading-tight">
-                  <h1 className="text-xl font-bold text-primary sm:text-2xl">Água Clara</h1>
+                  <div className="flex items-center gap-2">
+                    <Image src="/logo.svg" alt="Água Clara" width={28} height={28} priority />
+                    <h1 className="text-xl font-bold text-primary sm:text-2xl">Água Clara</h1>
+                  </div>
                   {isAuthed ? (
                     <OrganizationSwitcher
                       activeOrganizationId={tenantId}

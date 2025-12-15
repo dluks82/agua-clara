@@ -19,7 +19,7 @@ export function AccountActions({
         variant="outline"
         size={size}
         onClick={() => {
-          void signOut({ callbackUrl: "/login" });
+          void signOut({ callbackUrl: "/" });
         }}
       >
         <LogOut className="h-4 w-4" />

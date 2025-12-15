@@ -30,16 +30,16 @@ export function MobileNav({
         </Button>
       </DialogTrigger>
       <DialogContent
-        className="fixed top-0 right-0 left-auto bottom-0 h-full w-[85vw] max-w-sm translate-x-0 translate-y-0 rounded-none p-0"
+        className="fixed inset-y-0 right-0 left-auto h-full w-[85vw] max-w-sm translate-x-0 translate-y-0 rounded-none p-0 flex flex-col gap-0"
       >
-        <DialogHeader className="px-4 py-4 text-left">
+        <DialogHeader className="shrink-0 px-4 py-4 text-left">
           <DialogTitle className="text-base">{appName}</DialogTitle>
           {tenantName ? (
             <div className="text-xs text-muted-foreground">{tenantName}</div>
           ) : null}
         </DialogHeader>
 
-        <div className="px-2 pb-3">
+        <div className="flex-1 overflow-y-auto px-2 pb-3">
           <NavLink href="/dashboard" onNavigate={() => setOpen(false)}>
             Dashboard
           </NavLink>

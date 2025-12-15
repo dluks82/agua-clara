@@ -107,10 +107,10 @@ export function ProductionChart({ data, periodFrom, periodTo, showForecast = tru
     const startDate = new Date(item.start);
     const endDate = new Date(item.end);
     const daysDiff = differenceInDays(endDate, startDate);
-    
+
     // Verificar se é leitura diária (intervalo de ~24h com tolerância de ±2h)
     const timeDiffHours = Math.abs(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
-    const isDailyReading = daysDiff === 0 && timeDiffHours >= 22 && timeDiffHours <= 26;
+    const isDailyReading = timeDiffHours >= 22 && timeDiffHours <= 26;
     
     if (isDailyReading) {
       // LEITURA REAL: Intervalo de ~24h, produção acontece no dia da leitura final
@@ -128,8 +128,27 @@ export function ProductionChart({ data, periodFrom, periodTo, showForecast = tru
       
       acc[dateKey].production += item.delta_v;
       acc[dateKey].hours += item.delta_h;
+    } else if (timeDiffHours > 26) {
+      // Intervalo maior que 26h: distribuir proporcionalmente considerando horários (estimado)
+      const distributed = distributeProductionByDays(startDate, endDate, item.delta_v, item.delta_h);
+
+      Object.entries(distributed).forEach(([dateKey, dayData]) => {
+        if (!acc[dateKey]) {
+          acc[dateKey] = {
+            date: dateKey,
+            dateLabel: dayData.dateLabel,
+            production: 0,
+            hours: 0,
+            isEstimated: true,
+          };
+        }
+
+        acc[dateKey].production += dayData.production;
+        acc[dateKey].hours += dayData.hours;
+        acc[dateKey].isEstimated = true;
+      });
     } else if (daysDiff === 0) {
-      // Intervalo de 1 dia mas não é leitura diária (horário muito diferente)
+      // Intervalo curto no mesmo dia (ou virada de dia pequena), mas não diário: atribuir ao dia final como estimado
       const dateKey = format(endDate, "yyyy-MM-dd");
       
       if (!acc[dateKey]) {

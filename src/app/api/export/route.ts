@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
     
     const intervals = calculateIntervals(readingsData);
     const kpis = calculateKPIs(intervals);
-    const baseline = calculateBaseline(intervals);
+    const baselineAsOf = to ? new Date(to) : new Date();
+    const baseline = calculateBaseline(intervals, 7, undefined, baselineAsOf);
     const alerts = detectAlerts(intervals, baseline || undefined);
     
     // Gerar CSV

@@ -5,6 +5,9 @@ import { settings } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { assertTenant } from "@/lib/tenancy";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { ACTIVE_TENANT_COOKIE, requireUserId } from "@/lib/tenancy";
 
 export async function updateBillingCycleDay(day: number) {
   const { tenantId } = await assertTenant("admin");
@@ -39,4 +42,11 @@ export async function getBillingCycleDay(): Promise<number> {
   });
 
   return setting ? parseInt(setting.value) : 1; // Default to day 1
+}
+
+export async function clearActiveTenant() {
+  await requireUserId();
+  const cookieStore = await cookies();
+  cookieStore.delete(ACTIVE_TENANT_COOKIE);
+  redirect("/select-tenant");
 }

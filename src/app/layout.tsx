@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { AccountActions } from "@/components/account-actions";
+import { clearActiveTenant } from "@/app/actions";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,20 +25,23 @@ export default function RootLayout({
             <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-primary">Água Clara</h1>
-            <div className="flex space-x-4">
-              <a href="/dashboard" className="text-sm hover:text-primary">
-                Dashboard
-              </a>
-              <a href="/leituras" className="text-sm hover:text-primary">
-                Leituras
-              </a>
-              <a href="/eventos" className="text-sm hover:text-primary">
-                Eventos
-              </a>
-              <a href="/configuracoes" className="text-sm hover:text-primary">
-                Configurações
-              </a>
-            </div>
+                <div className="flex items-center gap-6">
+                  <div className="flex space-x-4">
+                    <a href="/dashboard" className="text-sm hover:text-primary">
+                      Dashboard
+                    </a>
+                    <a href="/leituras" className="text-sm hover:text-primary">
+                      Leituras
+                    </a>
+                    <a href="/eventos" className="text-sm hover:text-primary">
+                      Eventos
+                    </a>
+                    <a href="/configuracoes" className="text-sm hover:text-primary">
+                      Configurações
+                    </a>
+                  </div>
+                  <AccountActions clearTenantAction={clearActiveTenant} />
+                </div>
               </div>
             </div>
           </nav>

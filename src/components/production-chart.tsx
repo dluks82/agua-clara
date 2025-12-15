@@ -220,18 +220,6 @@ export function ProductionChart({ data, periodFrom, periodTo, showForecast = tru
     <Card>
       <CardHeader>
         <CardTitle>Produção Diária</CardTitle>
-        {hasEstimatedData && (
-          <Alert className="mt-2">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Atenção:</strong> Alguns valores são estimados por falta de leituras diárias.
-              <br />
-              <strong>Recomendação:</strong> Para melhor precisão e calibração do sistema, 
-              realize leituras diárias sempre no mesmo horário por pelo menos 7-14 dias.
-              Isso permitirá identificar padrões semanais e melhorar as projeções.
-            </AlertDescription>
-          </Alert>
-        )}
       </CardHeader>
       <CardContent>
         <ChartFrame
@@ -255,6 +243,19 @@ export function ProductionChart({ data, periodFrom, periodTo, showForecast = tru
             </BarChart>
           )}
         </ChartFrame>
+
+        {hasEstimatedData && (
+          <Alert className="mt-3">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Atenção:</strong> Alguns valores são estimados por falta de leituras diárias.
+              <br />
+              <strong>Recomendação:</strong> Para melhor precisão e calibração do sistema, realize leituras diárias
+              sempre no mesmo horário por pelo menos 7-14 dias. Isso permitirá identificar padrões semanais e melhorar
+              as projeções.
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   );

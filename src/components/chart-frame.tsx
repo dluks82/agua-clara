@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { cn } from "@/lib/utils";
+
 export function ChartFrame({
   height,
   className,
@@ -33,9 +35,8 @@ export function ChartFrame({
   }, [height]);
 
   return (
-    <div ref={ref} className={className} style={{ height }}>
+    <div ref={ref} className={cn("w-full min-w-0 overflow-hidden", className)} style={{ height }}>
       {size.width > 0 ? children(size) : placeholder ?? null}
     </div>
   );
 }
-

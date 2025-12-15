@@ -36,7 +36,10 @@ export default function RootLayout({
           <nav className="border-b">
             <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-primary">Água Clara</h1>
+                <div className="leading-tight">
+                  <h1 className="text-2xl font-bold text-primary">Água Clara</h1>
+                  <TenantName tenantNamePromise={tenantNamePromise} />
+                </div>
                 <div className="flex items-center gap-6">
                   <div className="flex space-x-4">
                     <a href="/dashboard" className="text-sm hover:text-primary">
@@ -52,10 +55,7 @@ export default function RootLayout({
                       Configurações
                     </a>
                   </div>
-                  <AccountActions
-                    clearTenantAction={clearActiveTenant}
-                    tenantNamePromise={tenantNamePromise}
-                  />
+                  <AccountActions clearTenantAction={clearActiveTenant} />
                 </div>
               </div>
             </div>
@@ -68,4 +68,10 @@ export default function RootLayout({
       </body>
     </html>
   );
+}
+
+async function TenantName({ tenantNamePromise }: { tenantNamePromise: Promise<string | null> }) {
+  const tenantName = await tenantNamePromise;
+  if (!tenantName) return null;
+  return <div className="text-xs text-muted-foreground">{tenantName}</div>;
 }

@@ -9,13 +9,17 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Save, AlertTriangle, Settings, Bell, BarChart3, HelpCircle, Loader2 } from "lucide-react";
+import { Save, AlertTriangle, Settings, Bell, BarChart3, HelpCircle, Loader2, Calendar } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SettingsData {
   // Alertas
   alert_flow_drop_threshold?: string;
   alert_cov_threshold?: string;
   alert_enabled?: string;
+
+  // Faturamento
+  billing_cycle_day?: string;
   
   // Baseline
   baseline_days?: string;
@@ -127,9 +131,9 @@ export default function ConfiguracoesClient() {
               Personalize os parâmetros do sistema de monitoramento
             </p>
           </div>
-          <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
+          <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto" aria-label="Salvar configurações">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            {saving ? "Salvando..." : "Salvar Configurações"}
+            {saving ? "Salvando..." : "Salvar configurações"}
           </Button>
         </div>
 
@@ -141,6 +145,52 @@ export default function ConfiguracoesClient() {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Configurações de Faturamento */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Faturamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="billing_cycle_day">Dia de Fechamento</Label>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Define o início do ciclo mensal de faturamento/monitoramento (usado na navegação de períodos do
+                      dashboard).
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Select
+                value={settings.billing_cycle_day || "1"}
+                onValueChange={(value) => handleInputChange("billing_cycle_day", value)}
+              >
+                <SelectTrigger id="billing_cycle_day">
+                  <SelectValue placeholder="Selecione o dia" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <SelectItem key={d} value={d.toString()}>
+                      Dia {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Define o início do ciclo mensal de faturamento/monitoramento.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Configurações de Alertas */}
         <Card>
           <CardHeader>

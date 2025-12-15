@@ -8,7 +8,6 @@ import { PeriodNavigator } from "@/components/period-navigator";
 import { getBillingCycleDay } from "@/app/actions";
 import { AlertTriangle, Droplets, Clock, Activity, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { SettingsDialog } from "@/components/settings-dialog";
 import { requireTenant } from "@/lib/tenancy";
 
 export default async function DashboardPage({
@@ -16,7 +15,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
-  const { tenantId, role } = await requireTenant("viewer");
+  const { tenantId } = await requireTenant("viewer");
   const resolvedSearchParams = await searchParams;
   const billingCycleDay = await getBillingCycleDay();
   
@@ -48,7 +47,6 @@ export default async function DashboardPage({
 
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            {(role === "admin" || role === "owner") && <SettingsDialog />}
             <PeriodNavigator 
               billingCycleDay={billingCycleDay}
               currentFrom={data.period.from}

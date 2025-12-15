@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { RefreshCw, Trash2, Edit } from "lucide-react";
+import { RefreshCw, Trash2, Edit, Loader2 } from "lucide-react";
 import { ReadingEditForm } from "@/components/reading-edit-form";
 
 interface Reading {
@@ -291,7 +291,7 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
                 </p>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={handleDeleteCancel}>
+                <Button variant="outline" onClick={handleDeleteCancel} disabled={deletingId !== null}>
                   Cancelar
                 </Button>
                 <Button
@@ -299,6 +299,7 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
                   onClick={handleDeleteConfirm}
                   disabled={deletingId !== null}
                 >
+                  {deletingId !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {deletingId !== null ? "Excluindo..." : "Excluir"}
                 </Button>
               </DialogFooter>

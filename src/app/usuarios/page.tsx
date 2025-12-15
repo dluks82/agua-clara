@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { Save, Trash2, UserPlus } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import { db } from "@/db";
 import { memberships, users } from "@/db/schema";
 import { assertTenant } from "@/lib/tenancy";
@@ -63,10 +63,12 @@ export default async function UsuariosPage({
                 <option value="owner">owner</option>
               </select>
             </div>
-            <Button type="submit">
-              <UserPlus className="h-4 w-4" />
-              Adicionar
-            </Button>
+            <SubmitButton
+              type="submit"
+              icon={<UserPlus className="h-4 w-4" />}
+              label="Adicionar"
+              pendingLabel="Adicionando..."
+            />
           </form>
 
           <div className="space-y-2 sm:hidden">
@@ -89,24 +91,28 @@ export default async function UsuariosPage({
                       <option value="admin">admin</option>
                       <option value="owner">owner</option>
                     </select>
-                    <Button type="submit" size="sm" variant="outline">
-                      <Save className="h-4 w-4" />
-                      Salvar
-                    </Button>
+                    <SubmitButton
+                      type="submit"
+                      size="sm"
+                      variant="outline"
+                      icon={<Save className="h-4 w-4" />}
+                      label="Salvar"
+                      pendingLabel="Salvando..."
+                    />
                   </form>
 
                   <form action={removeMember}>
                     <input type="hidden" name="userId" value={m.userId} />
-                    <Button
+                    <SubmitButton
                       type="submit"
                       size="sm"
                       variant="destructive"
                       className="w-full"
                       disabled={m.role === "owner" && currentRole !== "owner"}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remover
-                    </Button>
+                      icon={<Trash2 className="h-4 w-4" />}
+                      label="Remover"
+                      pendingLabel="Removendo..."
+                    />
                   </form>
                 </div>
               </div>
@@ -145,24 +151,28 @@ export default async function UsuariosPage({
                           <option value="admin">admin</option>
                           <option value="owner">owner</option>
                         </select>
-                        <Button type="submit" size="sm" variant="outline">
-                          <Save className="h-4 w-4" />
-                          Salvar
-                        </Button>
+                        <SubmitButton
+                          type="submit"
+                          size="sm"
+                          variant="outline"
+                          icon={<Save className="h-4 w-4" />}
+                          label="Salvar"
+                          pendingLabel="Salvando..."
+                        />
                       </form>
                     </td>
                     <td className="py-2 text-right">
                       <form action={removeMember}>
                         <input type="hidden" name="userId" value={m.userId} />
-                        <Button
+                        <SubmitButton
                           type="submit"
                           size="sm"
                           variant="destructive"
                           disabled={m.role === "owner" && currentRole !== "owner"}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Remover
-                        </Button>
+                          icon={<Trash2 className="h-4 w-4" />}
+                          label="Remover"
+                          pendingLabel="Removendo..."
+                        />
                       </form>
                     </td>
                   </tr>

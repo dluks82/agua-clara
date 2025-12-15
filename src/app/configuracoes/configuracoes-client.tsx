@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Save, AlertTriangle, Settings, Bell, BarChart3, HelpCircle } from "lucide-react";
+import { Save, AlertTriangle, Settings, Bell, BarChart3, HelpCircle, Loader2 } from "lucide-react";
 
 interface SettingsData {
   // Alertas
@@ -128,7 +128,7 @@ export default function ConfiguracoesClient() {
             </p>
           </div>
           <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
-            <Save className="mr-2 h-4 w-4" />
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {saving ? "Salvando..." : "Salvar Configurações"}
           </Button>
         </div>

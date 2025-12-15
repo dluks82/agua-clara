@@ -8,6 +8,7 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { SubmitButton } from "@/components/submit-button";
 
 export function MobileNav({
   appName,
@@ -64,9 +65,13 @@ export function MobileNav({
 
           <div className="px-2">
             <form action={clearTenantAction} onSubmit={() => setOpen(false)}>
-              <Button type="submit" variant="outline" className="w-full justify-start">
-                Trocar organização
-              </Button>
+              <SubmitButton
+                type="submit"
+                variant="outline"
+                className="w-full justify-start"
+                label="Trocar organização"
+                pendingLabel="Trocando..."
+              />
             </form>
             <Button
               variant="outline"

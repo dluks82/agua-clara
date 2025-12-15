@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Calendar, AlertTriangle, HelpCircle, Edit, Trash2 } from "lucide-react";
+import { Plus, Calendar, AlertTriangle, HelpCircle, Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
@@ -361,10 +361,11 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 </div>
                 
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                  <Button type="button" variant="outline" onClick={() => setShowForm(false)} disabled={submitting}>
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={submitting}>
+                    {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {submitting ? "Registrando..." : "Registrar Evento"}
                   </Button>
                 </div>
@@ -582,14 +583,15 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 />
               </div>
               
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowEditForm(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setShowEditForm(false)} disabled={submitting}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {submitting ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>

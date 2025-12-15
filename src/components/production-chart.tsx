@@ -1,11 +1,12 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertTriangle } from "lucide-react";
+import { ChartFrame } from "@/components/chart-frame";
 
 interface ProductionData {
   start: string;
@@ -233,46 +234,27 @@ export function ProductionChart({ data, periodFrom, periodTo, showForecast = tru
         )}
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <ChartFrame
+          height={300}
+          className="w-full min-w-0"
+          placeholder={<div className="flex h-full items-center justify-center text-muted-foreground">Carregando…</div>}
+        >
+          {({ width, height }) => (
+            <BarChart width={width} height={height} data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="dateLabel"
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis 
-                label={{ value: "Produção (m³)", angle: -90, position: "insideLeft" }}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip 
-                formatter={(value: number, name: string) => {
-                  return [`${value.toFixed(2)} m³`, name];
-                }}
+              <XAxis dataKey="dateLabel" tick={{ fontSize: 12 }} />
+              <YAxis label={{ value: "Produção (m³)", angle: -90, position: "insideLeft" }} tick={{ fontSize: 12 }} />
+              <Tooltip
+                formatter={(value: number, name: string) => [`${value.toFixed(2)} m³`, name]}
                 labelFormatter={(label) => `Data: ${label}`}
               />
               <Legend />
-              <Bar 
-                dataKey="realProduction" 
-                fill="#3b82f6"
-                name="Real"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar 
-                dataKey="estimatedProduction" 
-                fill="#93c5fd"
-                name="Estimado"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar 
-                dataKey="forecastProduction" 
-                fill="#dbeafe"
-                name="Projeção"
-                radius={[4, 4, 0, 0]}
-              />
+              <Bar dataKey="realProduction" fill="#3b82f6" name="Real" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="estimatedProduction" fill="#93c5fd" name="Estimado" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="forecastProduction" fill="#dbeafe" name="Projeção" radius={[4, 4, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
-        </div>
+          )}
+        </ChartFrame>
       </CardContent>
     </Card>
   );

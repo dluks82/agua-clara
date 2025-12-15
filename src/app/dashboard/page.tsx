@@ -72,8 +72,8 @@ export default async function DashboardPage({
 
     const latestRealTs = data.readings
       .filter((r) => r.id !== -1)
-      .map((r) => r.ts)
-      .filter((ts) => period.from <= ts && ts <= period.to && ts <= now)
+      .map((r) => (r.ts instanceof Date ? r.ts : new Date(r.ts)))
+      .filter((ts) => !Number.isNaN(ts.getTime()) && period.from <= ts && ts <= period.to && ts <= now)
       .reduce<Date | null>((max, ts) => (max && max > ts ? max : ts), null);
     if (!latestRealTs) return null;
 

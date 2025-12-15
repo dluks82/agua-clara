@@ -4,6 +4,7 @@ import { readings } from "@/db/schema";
 import { createReadingSchema, getReadingsSchema } from "@/lib/validations/readings";
 import { desc, and, gte, lte, eq, sql } from "drizzle-orm";
 import { requireTenantRole } from "@/lib/api-rbac";
+import { ZodError } from "zod";
 
 export async function POST(request: NextRequest) {
   const ctx = await requireTenantRole(request, "operator");
@@ -68,8 +69,11 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ id: newReading[0].id }, { status: 201 });
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof ZodError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
@@ -120,8 +124,11 @@ export async function GET(request: NextRequest) {
       total: Number(totalRows[0]?.count ?? 0),
     });
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof ZodError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }

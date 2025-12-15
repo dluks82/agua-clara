@@ -18,10 +18,18 @@ export const createReadingSchema = z.object({
 });
 
 export const getReadingsSchema = z.object({
-  from: z.string().datetime().optional().nullable(),
-  to: z.string().datetime().optional().nullable(),
-  page: z.preprocess((val) => val === null ? 1 : val, z.number().min(1).default(1)),
-  limit: z.preprocess((val) => val === null ? 20 : val, z.number().min(1).max(100).default(20)),
+  from: z.string().datetime({ offset: true }).optional().nullable(),
+  to: z.string().datetime({ offset: true }).optional().nullable(),
+  page: z.preprocess((val) => {
+    if (val === null || val === undefined || val === "") return 1;
+    const coerced = typeof val === "string" ? Number(val) : val;
+    return Number.isFinite(coerced as number) ? coerced : val;
+  }, z.number().min(1).default(1)),
+  limit: z.preprocess((val) => {
+    if (val === null || val === undefined || val === "") return 20;
+    const coerced = typeof val === "string" ? Number(val) : val;
+    return Number.isFinite(coerced as number) ? coerced : val;
+  }, z.number().min(1).max(100).default(20)),
 });
 
 export type CreateReadingInput = z.infer<typeof createReadingSchema>;

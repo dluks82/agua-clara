@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,11 @@ interface Reading {
 interface ReadingsListProps {
   refreshTrigger?: number;
   canWrite?: boolean;
+  from?: string;
+  to?: string;
 }
 
-export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListProps) {
+export function ReadingsList({ refreshTrigger, canWrite = true, from, to }: ReadingsListProps) {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,25 +34,31 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [readingToEdit, setReadingToEdit] = useState<Reading | null>(null);
 
-  const fetchReadings = async () => {
+  const fetchReadings = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch("/api/readings");
-      
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "100");
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      const response = await fetch(`/api/readings?${params.toString()}`);
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error("Erro ao carregar leituras");
+        throw new Error(data?.error || "Erro ao carregar leituras");
       }
-      
-      const data = await response.json();
+
       setReadings(data.items || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro inesperado");
     } finally {
       setLoading(false);
     }
-  };
+  }, [from, to]);
 
   const handleDeleteClick = (reading: Reading) => {
     setReadingToDelete(reading);
@@ -106,7 +114,7 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
 
   useEffect(() => {
     fetchReadings();
-  }, [refreshTrigger]);
+  }, [fetchReadings, refreshTrigger]);
 
   if (loading) {
     return (
@@ -150,8 +158,10 @@ export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListPr
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            <p>Nenhuma leitura cadastrada ainda.</p>
-            <p className="text-sm">Cadastre a primeira leitura para começar.</p>
+            <p>{from || to ? "Nenhuma leitura encontrada para o período selecionado." : "Nenhuma leitura cadastrada ainda."}</p>
+            <p className="text-sm">
+              {from || to ? "Tente ajustar o filtro de datas." : "Cadastre a primeira leitura para começar."}
+            </p>
           </div>
         </CardContent>
       </Card>

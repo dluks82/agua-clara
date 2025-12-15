@@ -19,9 +19,10 @@ interface Reading {
 
 interface ReadingsListProps {
   refreshTrigger?: number;
+  canWrite?: boolean;
 }
 
-export function ReadingsList({ refreshTrigger }: ReadingsListProps) {
+export function ReadingsList({ refreshTrigger, canWrite = true }: ReadingsListProps) {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -172,7 +173,7 @@ export function ReadingsList({ refreshTrigger }: ReadingsListProps) {
                   <TableHead>Hidrômetro (m³)</TableHead>
                   <TableHead>Horímetro (h)</TableHead>
                   <TableHead>Observações</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  {canWrite && <TableHead className="w-[100px]">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -190,25 +191,27 @@ export function ReadingsList({ refreshTrigger }: ReadingsListProps) {
                     <TableCell>
                       {reading.notes || "-"}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditClick(reading)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteClick(reading)}
-                          disabled={deletingId === reading.id}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {canWrite && (
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditClick(reading)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteClick(reading)}
+                            disabled={deletingId === reading.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -217,57 +220,61 @@ export function ReadingsList({ refreshTrigger }: ReadingsListProps) {
         </CardContent>
       </Card>
 
-      {/* Dialog de Confirmação */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Tem certeza que deseja excluir esta leitura?
-            </p>
-            {readingToDelete && (
-              <div className="mt-4 p-4 bg-muted rounded-lg">
-                <p><strong>Data/Hora:</strong> {format(new Date(readingToDelete.ts), "dd/MM/yyyy HH:mm")}</p>
-                <p><strong>Hidrômetro:</strong> {parseFloat(readingToDelete.hydrometer_m3).toFixed(3)} m³</p>
-                <p><strong>Horímetro:</strong> {parseFloat(readingToDelete.horimeter_h).toFixed(3)} h</p>
+      {canWrite && (
+        <>
+          {/* Dialog de Confirmação */}
+          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirmar Exclusão</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-sm text-muted-foreground">
+                  Tem certeza que deseja excluir esta leitura?
+                </p>
+                {readingToDelete && (
+                  <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <p><strong>Data/Hora:</strong> {format(new Date(readingToDelete.ts), "dd/MM/yyyy HH:mm")}</p>
+                    <p><strong>Hidrômetro:</strong> {parseFloat(readingToDelete.hydrometer_m3).toFixed(3)} m³</p>
+                    <p><strong>Horímetro:</strong> {parseFloat(readingToDelete.horimeter_h).toFixed(3)} h</p>
+                  </div>
+                )}
+                <p className="text-sm text-destructive mt-2">
+                  Esta ação não pode ser desfeita.
+                </p>
               </div>
-            )}
-            <p className="text-sm text-destructive mt-2">
-              Esta ação não pode ser desfeita.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleDeleteCancel}>
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteConfirm}
-              disabled={deletingId !== null}
-            >
-              {deletingId !== null ? "Excluindo..." : "Excluir"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={handleDeleteCancel}>
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteConfirm}
+                  disabled={deletingId !== null}
+                >
+                  {deletingId !== null ? "Excluindo..." : "Excluir"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-      {/* Dialog de Edição */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Leitura</DialogTitle>
-          </DialogHeader>
-          {readingToEdit && (
-            <ReadingEditForm
-              reading={readingToEdit}
-              onSuccess={handleEditSuccess}
-              onCancel={handleEditCancel}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+          {/* Dialog de Edição */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Editar Leitura</DialogTitle>
+              </DialogHeader>
+              {readingToEdit && (
+                <ReadingEditForm
+                  reading={readingToEdit}
+                  onSuccess={handleEditSuccess}
+                  onCancel={handleEditCancel}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </>
   );
 }

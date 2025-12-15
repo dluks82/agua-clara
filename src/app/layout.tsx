@@ -66,9 +66,7 @@ export default function RootLayout({
                     <a href="/eventos" className="text-sm hover:text-primary">
                       Eventos
                     </a>
-                    <a href="/configuracoes" className="text-sm hover:text-primary">
-                      Configurações
-                    </a>
+                    <ConfigLink showAdminLinksPromise={showUsersLinkPromise} />
                     <UsersLink showUsersLinkPromise={showUsersLinkPromise} />
                   </div>
                   <AccountActions clearTenantAction={clearActiveTenant} />
@@ -98,6 +96,16 @@ async function UsersLink({ showUsersLinkPromise }: { showUsersLinkPromise: Promi
   return (
     <a href="/usuarios" className="text-sm hover:text-primary">
       Usuários
+    </a>
+  );
+}
+
+async function ConfigLink({ showAdminLinksPromise }: { showAdminLinksPromise: Promise<boolean> }) {
+  const show = await showAdminLinksPromise;
+  if (!show) return null;
+  return (
+    <a href="/configuracoes" className="text-sm hover:text-primary">
+      Configurações
     </a>
   );
 }

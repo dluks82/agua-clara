@@ -12,6 +12,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { SignInGoogleButton } from "@/components/sign-in-google-button";
 import { OrganizationSwitcher } from "@/components/organization-switcher";
 import { selectTenant } from "@/app/select-tenant/actions";
+import { NavLinks } from "@/components/nav-links";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -101,19 +102,7 @@ export default async function RootLayout({
                   <div className="hidden items-center gap-6 sm:flex">
                     {isAuthed ? (
                       <>
-                        <div className="flex space-x-4">
-                          <a href="/dashboard" className="text-sm hover:text-primary">
-                            Dashboard
-                          </a>
-                          <a href="/leituras" className="text-sm hover:text-primary">
-                            Leituras
-                          </a>
-                          <a href="/eventos" className="text-sm hover:text-primary">
-                            Eventos
-                          </a>
-                          <ConfigLink show={showAdminLinks} />
-                          <UsersLink show={showAdminLinks} />
-                        </div>
+                        <NavLinks showAdminLinks={showAdminLinks} />
                         <AccountActions />
                       </>
                     ) : (
@@ -131,23 +120,5 @@ export default async function RootLayout({
         </div>
       </body>
     </html>
-  );
-}
-
-function UsersLink({ show }: { show: boolean }) {
-  if (!show) return null;
-  return (
-    <a href="/usuarios" className="text-sm hover:text-primary">
-      Usuários
-    </a>
-  );
-}
-
-function ConfigLink({ show }: { show: boolean }) {
-  if (!show) return null;
-  return (
-    <a href="/configuracoes" className="text-sm hover:text-primary">
-      Configurações
-    </a>
   );
 }

@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MenuIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export function MobileNav({
   appName,
@@ -19,6 +21,7 @@ export function MobileNav({
   showAdminLinks: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
+  const pathname = usePathname();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -39,21 +42,21 @@ export function MobileNav({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-2 pb-3">
-          <NavLink href="/dashboard" onNavigate={() => setOpen(false)}>
+          <NavLink href="/dashboard" active={pathname === "/dashboard"} onNavigate={() => setOpen(false)}>
             Dashboard
           </NavLink>
-          <NavLink href="/leituras" onNavigate={() => setOpen(false)}>
+          <NavLink href="/leituras" active={pathname === "/leituras"} onNavigate={() => setOpen(false)}>
             Leituras
           </NavLink>
-          <NavLink href="/eventos" onNavigate={() => setOpen(false)}>
+          <NavLink href="/eventos" active={pathname === "/eventos"} onNavigate={() => setOpen(false)}>
             Eventos
           </NavLink>
           {showAdminLinks ? (
             <>
-              <NavLink href="/configuracoes" onNavigate={() => setOpen(false)}>
+              <NavLink href="/configuracoes" active={pathname === "/configuracoes"} onNavigate={() => setOpen(false)}>
                 Configurações
               </NavLink>
-              <NavLink href="/usuarios" onNavigate={() => setOpen(false)}>
+              <NavLink href="/usuarios" active={pathname === "/usuarios"} onNavigate={() => setOpen(false)}>
                 Usuários
               </NavLink>
             </>
@@ -82,15 +85,24 @@ export function MobileNav({
 function NavLink({
   href,
   children,
+  active,
   onNavigate,
 }: {
   href: string;
   children: React.ReactNode;
+  active: boolean;
   onNavigate: () => void;
 }) {
   return (
-    <Button asChild variant="ghost" className="w-full justify-start" onClick={onNavigate}>
-      <Link href={href}>{children}</Link>
+    <Button
+      asChild
+      variant="ghost"
+      className={cn("w-full justify-start", active ? "bg-muted text-primary" : undefined)}
+      onClick={onNavigate}
+    >
+      <Link href={href} aria-current={active ? "page" : undefined}>
+        {children}
+      </Link>
     </Button>
   );
 }

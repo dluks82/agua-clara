@@ -1,8 +1,6 @@
 import { getDashboardData } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FlowChart } from "@/components/flow-chart";
-import { ProductionChart } from "@/components/production-chart";
 import { ExportButton } from "@/components/export-button";
 import { PeriodNavigator } from "@/components/period-navigator";
 import { getBillingCycleDay } from "@/app/actions";
@@ -12,6 +10,7 @@ import { requireTenant } from "@/lib/tenancy";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HelpHint } from "@/components/help-hint";
+import { DashboardCharts } from "@/app/dashboard/dashboard-charts";
 
 export default async function DashboardPage({
   searchParams,
@@ -238,10 +237,7 @@ export default async function DashboardPage({
           </Card>
         </div>
         
-        <div className="grid gap-4 md:grid-cols-2">
-          <FlowChart data={data.intervals} />
-          <ProductionChart data={data.intervals} />
-        </div>
+        <DashboardCharts intervals={data.intervals} />
       </div>
     </TooltipProvider>
   );

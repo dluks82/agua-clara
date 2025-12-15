@@ -6,8 +6,9 @@ import { AccountActions } from "@/components/account-actions";
 import { clearActiveTenant } from "@/app/actions";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { tenants } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { memberships, tenants } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { auth } from "@/auth";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +28,20 @@ export default function RootLayout({
     if (!tenantId) return null;
     const row = await db.query.tenants.findFirst({ where: eq(tenants.id, tenantId) });
     return row?.name ?? null;
+  })();
+
+  const showUsersLinkPromise = (async () => {
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) return false;
+    const cookieStore = await cookies();
+    const tenantId = cookieStore.get("ac_tenant")?.value;
+    if (!tenantId) return false;
+
+    const m = await db.query.memberships.findFirst({
+      where: and(eq(memberships.user_id, userId), eq(memberships.tenant_id, tenantId)),
+    });
+    return m?.role === "owner" || m?.role === "admin";
   })();
 
   return (
@@ -54,6 +69,7 @@ export default function RootLayout({
                     <a href="/configuracoes" className="text-sm hover:text-primary">
                       Configurações
                     </a>
+                    <UsersLink showUsersLinkPromise={showUsersLinkPromise} />
                   </div>
                   <AccountActions clearTenantAction={clearActiveTenant} />
                 </div>
@@ -74,4 +90,14 @@ async function TenantName({ tenantNamePromise }: { tenantNamePromise: Promise<st
   const tenantName = await tenantNamePromise;
   if (!tenantName) return null;
   return <div className="text-xs text-muted-foreground">{tenantName}</div>;
+}
+
+async function UsersLink({ showUsersLinkPromise }: { showUsersLinkPromise: Promise<boolean> }) {
+  const show = await showUsersLinkPromise;
+  if (!show) return null;
+  return (
+    <a href="/usuarios" className="text-sm hover:text-primary">
+      Usuários
+    </a>
+  );
 }

@@ -11,11 +11,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Calendar, AlertTriangle, HelpCircle, Edit, Trash2, Loader2 } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Plus, Calendar, AlertTriangle, Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
+import { HelpHint } from "@/components/help-hint";
 
 interface Event {
   id: number;
@@ -347,17 +348,15 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="type">Tipo de Evento</Label>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            Selecione o tipo de evento que melhor descreve a situação. 
-                            Isso ajuda na organização e análise dos dados.
+                      <HelpHint
+                        label="Ajuda: tipo de evento"
+                        content={
+                          <p>
+                            Selecione o tipo de evento que melhor descreve a situação. Isso ajuda na organização e
+                            análise dos dados.
                           </p>
-                        </TooltipContent>
-                      </Tooltip>
+                        }
+                      />
                     </div>
                     <Select
                       value={formData.type}
@@ -576,17 +575,15 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="edit_type">Tipo de Evento</Label>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          Selecione o tipo de evento que melhor descreve a situação. 
-                          Isso ajuda na organização e análise dos dados.
+                    <HelpHint
+                      label="Ajuda: tipo de evento"
+                      content={
+                        <p>
+                          Selecione o tipo de evento que melhor descreve a situação. Isso ajuda na organização e análise
+                          dos dados.
                         </p>
-                      </TooltipContent>
-                    </Tooltip>
+                      }
+                    />
                   </div>
                   <Select
                     value={formData.type}

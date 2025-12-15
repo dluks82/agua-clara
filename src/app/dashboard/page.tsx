@@ -6,11 +6,12 @@ import { ProductionChart } from "@/components/production-chart";
 import { ExportButton } from "@/components/export-button";
 import { PeriodNavigator } from "@/components/period-navigator";
 import { getBillingCycleDay } from "@/app/actions";
-import { AlertTriangle, Droplets, Clock, Activity, HelpCircle, ClipboardList } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertTriangle, Droplets, Clock, Activity, ClipboardList } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireTenant } from "@/lib/tenancy";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { HelpHint } from "@/components/help-hint";
 
 export default async function DashboardPage({
   searchParams,
@@ -107,17 +108,15 @@ export default async function DashboardPage({
                 <CardTitle className="text-sm font-medium">
                   Produção Total
                 </CardTitle>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Volume total de água produzida no período, calculado pela diferença 
-                      entre as leituras do hidrômetro (m³).
+                <HelpHint
+                  label="Ajuda: produção total"
+                  content={
+                    <p>
+                      Volume total de água produzida no período, calculado pela diferença entre as leituras do
+                      hidrômetro (m³).
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Droplets className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -137,17 +136,15 @@ export default async function DashboardPage({
                 <CardTitle className="text-sm font-medium">
                   Vazão Média
                 </CardTitle>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Vazão média ponderada do sistema (Volume Total / Horas Totais).
-                      Reflete a capacidade real de entrega.
+                <HelpHint
+                  label="Ajuda: vazão média"
+                  content={
+                    <p>
+                      Vazão média ponderada do sistema (Volume Total / Horas Totais). Reflete a capacidade real de
+                      entrega.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -167,17 +164,15 @@ export default async function DashboardPage({
                 <CardTitle className="text-sm font-medium">
                   Horas Operação
                 </CardTitle>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Tempo total de operação do sistema, calculado pela diferença 
-                      entre as leituras do horímetro (horas).
+                <HelpHint
+                  label="Ajuda: horas de operação"
+                  content={
+                    <p>
+                      Tempo total de operação do sistema, calculado pela diferença entre as leituras do horímetro
+                      (horas).
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -197,17 +192,15 @@ export default async function DashboardPage({
                 <CardTitle className="text-sm font-medium">
                   COV
                 </CardTitle>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Coeficiente de Variação da vazão (%). Mede a estabilidade do sistema: 
-                      valores baixos indicam operação estável, valores altos indicam oscilações.
+                <HelpHint
+                  label="Ajuda: COV"
+                  content={
+                    <p>
+                      Coeficiente de Variação da vazão (%). Mede a estabilidade do sistema: valores baixos indicam
+                      operação estável, valores altos indicam oscilações.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -227,16 +220,10 @@ export default async function DashboardPage({
                 <CardTitle className="text-sm font-medium">
                   Utilização
                 </CardTitle>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Taxa de utilização da bomba no período (Horas Operação / Tempo Total).
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
+                <HelpHint
+                  label="Ajuda: utilização"
+                  content={<p>Taxa de utilização da bomba no período (Horas Operação / Tempo Total).</p>}
+                />
               </div>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>

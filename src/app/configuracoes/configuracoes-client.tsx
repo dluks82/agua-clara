@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Save, AlertTriangle, Settings, Bell, BarChart3, HelpCircle, Loader2, Calendar } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Save, AlertTriangle, Settings, Bell, BarChart3, Loader2, Calendar } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HelpHint } from "@/components/help-hint";
 
 interface SettingsData {
   // Alertas
@@ -157,17 +158,15 @@ export default function ConfiguracoesClient() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Label htmlFor="billing_cycle_day">Dia de Fechamento</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
+                <HelpHint
+                  label="Ajuda: dia de fechamento"
+                  content={
+                    <p>
                       Define o início do ciclo mensal de faturamento/monitoramento (usado na navegação de períodos do
                       dashboard).
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Select
                 value={settings.billing_cycle_day || "1"}
@@ -203,17 +202,15 @@ export default function ConfiguracoesClient() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Label htmlFor="alert_enabled">Alertas Ativados</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Liga ou desliga o sistema de alertas. Quando desativado, 
-                      nenhum alerta será gerado, mesmo que as condições sejam atendidas.
+                <HelpHint
+                  label="Ajuda: alertas ativados"
+                  content={
+                    <p>
+                      Liga ou desliga o sistema de alertas. Quando desativado, nenhum alerta será gerado, mesmo que as
+                      condições sejam atendidas.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Switch
                 id="alert_enabled"
@@ -227,18 +224,15 @@ export default function ConfiguracoesClient() {
                 <Label htmlFor="alert_flow_drop_threshold">
                   Limiar de Queda de Vazão (%)
                 </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Percentual de queda da vazão em relação ao baseline para gerar alerta. 
-                      Exemplo: 10% significa que se a vazão cair 10% ou mais do valor de referência, 
-                      um alerta será disparado.
+                <HelpHint
+                  label="Ajuda: limiar de queda de vazão"
+                  content={
+                    <p>
+                      Percentual de queda da vazão em relação ao baseline para gerar alerta. Exemplo: 10% significa que
+                      se a vazão cair 10% ou mais do valor de referência, um alerta será disparado.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Input
                 id="alert_flow_drop_threshold"
@@ -259,18 +253,15 @@ export default function ConfiguracoesClient() {
                 <Label htmlFor="alert_cov_threshold">
                   Limiar de COV (%)
                 </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Coeficiente de Variação (COV) mede a estabilidade do sistema. 
-                      Valores baixos (5-10%) indicam operação estável, valores altos (&gt;15%) 
-                      indicam oscilações que podem gerar alertas.
+                <HelpHint
+                  label="Ajuda: limiar de COV"
+                  content={
+                    <p>
+                      Coeficiente de Variação (COV) mede a estabilidade do sistema. Valores baixos (5-10%) indicam
+                      operação estável, valores altos (&gt;15%) indicam oscilações que podem gerar alertas.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Input
                 id="alert_cov_threshold"
@@ -302,18 +293,15 @@ export default function ConfiguracoesClient() {
                 <Label htmlFor="baseline_days">
                   Período do Baseline (dias)
                 </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Número de dias para calcular o valor de referência (baseline). 
-                      O sistema analisa os dados dos últimos X dias para estabelecer 
-                      um padrão de operação normal.
+                <HelpHint
+                  label="Ajuda: período do baseline"
+                  content={
+                    <p>
+                      Número de dias para calcular o valor de referência (baseline). O sistema analisa os dados dos
+                      últimos X dias para estabelecer um padrão de operação normal.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Input
                 id="baseline_days"
@@ -334,18 +322,15 @@ export default function ConfiguracoesClient() {
                 <Label htmlFor="baseline_min_intervals">
                   Mínimo de Intervalos
                 </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Número mínimo de intervalos válidos necessários para calcular 
-                      o baseline. Garante que o valor de referência seja baseado em 
-                      dados suficientes para ser confiável.
+                <HelpHint
+                  label="Ajuda: mínimo de intervalos"
+                  content={
+                    <p>
+                      Número mínimo de intervalos válidos necessários para calcular o baseline. Garante que o valor de
+                      referência seja baseado em dados suficientes para ser confiável.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Input
                 id="baseline_min_intervals"
@@ -377,17 +362,15 @@ export default function ConfiguracoesClient() {
                 <Label htmlFor="system_name">
                   Nome do Sistema
                 </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Nome identificador do sistema de monitoramento. 
-                      Aparece no cabeçalho da aplicação e nos relatórios exportados.
+                <HelpHint
+                  label="Ajuda: nome do sistema"
+                  content={
+                    <p>
+                      Nome identificador do sistema de monitoramento. Aparece no cabeçalho da aplicação e nos relatórios
+                      exportados.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Input
                 id="system_name"
@@ -402,17 +385,15 @@ export default function ConfiguracoesClient() {
                 <Label htmlFor="system_description">
                   Descrição
                 </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Descrição detalhada do sistema. Aparece na página inicial 
-                      e ajuda a identificar o propósito específico do monitoramento.
+                <HelpHint
+                  label="Ajuda: descrição"
+                  content={
+                    <p>
+                      Descrição detalhada do sistema. Aparece na página inicial e ajuda a identificar o propósito
+                      específico do monitoramento.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <Input
                 id="system_description"
@@ -427,17 +408,15 @@ export default function ConfiguracoesClient() {
                 <Label htmlFor="export_format">
                   Formato de Exportação
                 </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      Formato padrão para exportação de dados. CSV é mais universal, 
-                      Excel oferece melhor formatação para planilhas.
+                <HelpHint
+                  label="Ajuda: formato de exportação"
+                  content={
+                    <p>
+                      Formato padrão para exportação de dados. CSV é mais universal, Excel oferece melhor formatação para
+                      planilhas.
                     </p>
-                  </TooltipContent>
-                </Tooltip>
+                  }
+                />
               </div>
               <select
                 id="export_format"

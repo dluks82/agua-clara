@@ -8,18 +8,15 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { SubmitButton } from "@/components/submit-button";
 
 export function MobileNav({
   appName,
   tenantName,
   showAdminLinks,
-  clearTenantAction,
 }: {
   appName: string;
   tenantName: string | null;
   showAdminLinks: boolean;
-  clearTenantAction: () => Promise<void>;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -65,18 +62,9 @@ export function MobileNav({
           <Separator className="my-3" />
 
           <div className="px-2">
-            <form action={clearTenantAction} onSubmit={() => setOpen(false)}>
-              <SubmitButton
-                type="submit"
-                variant="outline"
-                className="w-full justify-start"
-                label="Trocar organização"
-                pendingLabel="Trocando..."
-              />
-            </form>
             <Button
               variant="outline"
-              className="mt-2 w-full justify-start"
+              className="w-full justify-start"
               onClick={() => {
                 setOpen(false);
                 void signOut({ callbackUrl: "/login" });

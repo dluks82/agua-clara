@@ -3,13 +3,15 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AccountActions } from "@/components/account-actions";
-import { clearActiveTenant } from "@/app/actions";
 import { cookies } from "next/headers";
 import { db } from "@/db";
 import { memberships, tenants } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { MobileNav } from "@/components/mobile-nav";
+import { SignInGoogleButton } from "@/components/sign-in-google-button";
+import { OrganizationSwitcher } from "@/components/organization-switcher";
+import { selectTenant } from "@/app/select-tenant/actions";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +30,7 @@ export default async function RootLayout({
 
   const session = await auth();
   const userId = session?.user?.id ?? null;
+  const isAuthed = Boolean(userId);
 
   const [tenantRow, membershipRow] = await (async () => {
     try {
@@ -47,6 +50,24 @@ export default async function RootLayout({
   const tenantName = tenantRow?.name ?? null;
   const showAdminLinks = membershipRow?.role === "owner" || membershipRow?.role === "admin";
 
+  const organizations = await (async () => {
+    if (!userId) return [] as Array<{ id: string; name: string; role: string }>;
+    try {
+      return await db
+        .select({
+          id: memberships.tenant_id,
+          name: tenants.name,
+          role: memberships.role,
+        })
+        .from(memberships)
+        .innerJoin(tenants, eq(tenants.id, memberships.tenant_id))
+        .where(eq(memberships.user_id, userId))
+        .orderBy(tenants.name);
+    } catch {
+      return [] as Array<{ id: string; name: string; role: string }>;
+    }
+  })();
+
   return (
     <html lang="pt-BR">
       <body className={inter.className}>
@@ -56,32 +77,48 @@ export default async function RootLayout({
               <div className="flex items-center justify-between">
                 <div className="leading-tight">
                   <h1 className="text-xl font-bold text-primary sm:text-2xl">Água Clara</h1>
-                  <TenantName tenantName={tenantName} />
+                  {isAuthed ? (
+                    <OrganizationSwitcher
+                      activeOrganizationId={tenantId}
+                      activeOrganizationName={tenantName}
+                      organizations={organizations}
+                      selectOrganizationAction={selectTenant}
+                    />
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-2 sm:gap-6">
                   <div className="sm:hidden">
-                    <MobileNav
-                      appName="Água Clara"
-                      tenantName={tenantName}
-                      showAdminLinks={showAdminLinks}
-                      clearTenantAction={clearActiveTenant}
-                    />
+                    {isAuthed ? (
+                      <MobileNav
+                        appName="Água Clara"
+                        tenantName={tenantName}
+                        showAdminLinks={showAdminLinks}
+                      />
+                    ) : (
+                      <SignInGoogleButton label="Entrar" variant="outline" size="sm" callbackUrl="/select-tenant" />
+                    )}
                   </div>
                   <div className="hidden items-center gap-6 sm:flex">
-                    <div className="flex space-x-4">
-                      <a href="/dashboard" className="text-sm hover:text-primary">
-                        Dashboard
-                      </a>
-                      <a href="/leituras" className="text-sm hover:text-primary">
-                        Leituras
-                      </a>
-                      <a href="/eventos" className="text-sm hover:text-primary">
-                        Eventos
-                      </a>
-                      <ConfigLink show={showAdminLinks} />
-                      <UsersLink show={showAdminLinks} />
-                    </div>
-                    <AccountActions clearTenantAction={clearActiveTenant} />
+                    {isAuthed ? (
+                      <>
+                        <div className="flex space-x-4">
+                          <a href="/dashboard" className="text-sm hover:text-primary">
+                            Dashboard
+                          </a>
+                          <a href="/leituras" className="text-sm hover:text-primary">
+                            Leituras
+                          </a>
+                          <a href="/eventos" className="text-sm hover:text-primary">
+                            Eventos
+                          </a>
+                          <ConfigLink show={showAdminLinks} />
+                          <UsersLink show={showAdminLinks} />
+                        </div>
+                        <AccountActions />
+                      </>
+                    ) : (
+                      <SignInGoogleButton label="Entrar" variant="outline" size="sm" callbackUrl="/select-tenant" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -95,11 +132,6 @@ export default async function RootLayout({
       </body>
     </html>
   );
-}
-
-function TenantName({ tenantName }: { tenantName: string | null }) {
-  if (!tenantName) return null;
-  return <div className="text-xs text-muted-foreground">{tenantName}</div>;
 }
 
 function UsersLink({ show }: { show: boolean }) {

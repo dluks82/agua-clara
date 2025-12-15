@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Save, X, AlertTriangle } from "lucide-react";
+import { toDatetimeLocalValue } from "@/lib/datetime-local";
 
 interface Reading {
   id: number;
@@ -24,7 +25,7 @@ interface ReadingEditFormProps {
 
 export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFormProps) {
   const [formData, setFormData] = useState({
-    ts: new Date(reading.ts).toISOString().slice(0, 16),
+    ts: toDatetimeLocalValue(new Date(reading.ts)),
     hydrometer_m3: reading.hydrometer_m3,
     horimeter_h: reading.horimeter_h,
     notes: reading.notes || "",

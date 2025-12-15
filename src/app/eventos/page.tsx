@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Plus, Calendar, Wrench, Settings, AlertTriangle, HelpCircle, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toDatetimeLocalValue } from "@/lib/datetime-local";
 
 interface Event {
   id: number;
@@ -43,7 +44,7 @@ export default function EventosPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   
   const [formData, setFormData] = useState<EventFormData>({
-    ts: new Date().toISOString().slice(0, 16),
+    ts: toDatetimeLocalValue(),
     type: "",
     description: "",
     details: "",
@@ -114,7 +115,7 @@ export default function EventosPage() {
 
       setMessage({ type: "success", text: "Evento registrado com sucesso!" });
       setFormData({
-        ts: new Date().toISOString().slice(0, 16),
+        ts: toDatetimeLocalValue(),
         type: "",
         description: "",
         details: "",
@@ -135,7 +136,7 @@ export default function EventosPage() {
     setEditingEvent(event);
     const payload = (event.payload ?? {}) as { description?: string; details?: string };
     setFormData({
-      ts: new Date(event.ts).toISOString().slice(0, 16),
+      ts: toDatetimeLocalValue(new Date(event.ts)),
       type: event.type,
       description: payload.description || "",
       details: payload.details || "",
@@ -182,7 +183,7 @@ export default function EventosPage() {
 
       setMessage({ type: "success", text: "Evento atualizado com sucesso!" });
       setFormData({
-        ts: new Date().toISOString().slice(0, 16),
+        ts: toDatetimeLocalValue(),
         type: "",
         description: "",
         details: "",

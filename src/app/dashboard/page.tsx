@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { HelpHint } from "@/components/help-hint";
 import { DashboardCharts } from "@/app/dashboard/dashboard-charts";
 import { unstable_cache } from "next/cache";
+import { NewReadingDialog } from "@/app/dashboard/new-reading-dialog";
 
 function getCachedDashboardData(tenantId: string) {
   return unstable_cache(
@@ -62,6 +63,7 @@ export default async function DashboardPage({
               currentFrom={period.from}
               currentTo={period.to}
             />
+            {canWrite ? <NewReadingDialog variant="outline" /> : null}
             <ExportButton />
           </div>
         </div>
@@ -94,9 +96,18 @@ export default async function DashboardPage({
                 período.
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button asChild className="w-full sm:w-auto">
-                  <Link href="/leituras">{canWrite ? "Cadastrar leituras" : "Ver leituras"}</Link>
-                </Button>
+                {canWrite ? (
+                  <>
+                    <NewReadingDialog className="w-full sm:w-auto" label="Cadastrar leitura" />
+                    <Button asChild variant="outline" className="w-full sm:w-auto">
+                      <Link href="/leituras">Ver leituras</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <Button asChild className="w-full sm:w-auto">
+                    <Link href="/leituras">Ver leituras</Link>
+                  </Button>
+                )}
                 {!canWrite ? (
                   <div className="text-xs text-muted-foreground">
                     Você está como <code>viewer</code>. Peça a um admin/owner para registrar leituras.

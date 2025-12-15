@@ -18,11 +18,21 @@ const ProductionChart = dynamic(
   }
 );
 
-export function DashboardCharts({ intervals }: { intervals: Interval[] }) {
+export function DashboardCharts({
+  intervals,
+  periodFrom,
+  periodTo,
+  showForecast,
+}: {
+  intervals: Interval[];
+  periodFrom: string;
+  periodTo: string;
+  showForecast: boolean;
+}) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <FlowChart data={intervals} />
-      <ProductionChart data={intervals} />
+      <ProductionChart data={intervals} periodFrom={periodFrom} periodTo={periodTo} showForecast={showForecast} />
     </div>
   );
 }

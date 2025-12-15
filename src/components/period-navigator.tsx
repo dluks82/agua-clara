@@ -52,7 +52,7 @@ export function PeriodNavigator({
   }
 
   return (
-    <div className={cn("flex items-center gap-2 bg-background border rounded-md p-1", className)}>
+    <div className={cn("flex w-full items-center gap-1 rounded-md border bg-background p-1 sm:w-auto sm:gap-2", className)}>
       <Button
         variant="ghost"
         size="icon"
@@ -62,10 +62,18 @@ export function PeriodNavigator({
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
-      <div className="flex items-center gap-2 px-2 min-w-[200px] justify-center font-medium text-sm">
+      <div
+        className="flex min-w-0 flex-1 items-center justify-center gap-2 px-1 text-sm font-medium sm:flex-none sm:px-2"
+        title={`Ciclo de faturamento (início dia ${billingCycleDay})`}
+      >
         <Calendar className="h-4 w-4 text-muted-foreground" />
-        <span>
-          {format(currentFrom, "dd/MM/yyyy", { locale: ptBR })} - {format(currentTo, "dd/MM/yyyy", { locale: ptBR })}
+        <span className="min-w-0 truncate">
+          <span className="sm:hidden">
+            {format(currentFrom, "dd/MM", { locale: ptBR })} - {format(currentTo, "dd/MM", { locale: ptBR })}
+          </span>
+          <span className="hidden sm:inline">
+            {format(currentFrom, "dd/MM/yyyy", { locale: ptBR })} - {format(currentTo, "dd/MM/yyyy", { locale: ptBR })}
+          </span>
         </span>
       </div>
 

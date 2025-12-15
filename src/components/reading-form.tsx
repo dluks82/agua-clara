@@ -32,10 +32,24 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const setField = (field: keyof typeof formData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const parseDecimal = (raw: string) => parseFloat(raw.replace(",", ".").trim());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrors({});
 
     try {
       let timestamp = formData.ts;
@@ -45,29 +59,39 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
       
       const payload: CreateReadingInput = {
         ts: timestamp,
-        hydrometer_m3: parseFloat(formData.hydrometer_m3),
-        horimeter_h: parseFloat(formData.horimeter_h),
-        notes: formData.notes,
+        hydrometer_m3: parseDecimal(formData.hydrometer_m3),
+        horimeter_h: parseDecimal(formData.horimeter_h),
+        notes: formData.notes.trim() || undefined,
         hydrometer_status: formData.hydrometer_status,
         horimeter_status: formData.horimeter_status,
       };
 
       if (formData.hydrometer_status === "exchange") {
-        payload.hydrometer_final_old = parseFloat(formData.hydrometer_final_old);
-        payload.hydrometer_initial_new = parseFloat(formData.hydrometer_initial_new);
+        payload.hydrometer_final_old = parseDecimal(formData.hydrometer_final_old);
+        payload.hydrometer_initial_new = parseDecimal(formData.hydrometer_initial_new);
       }
 
       if (formData.horimeter_status === "exchange") {
-        payload.horimeter_final_old = parseFloat(formData.horimeter_final_old);
-        payload.horimeter_initial_new = parseFloat(formData.horimeter_initial_new);
+        payload.horimeter_final_old = parseDecimal(formData.horimeter_final_old);
+        payload.horimeter_initial_new = parseDecimal(formData.horimeter_initial_new);
       }
 
-      const validatedData = createReadingSchema.parse(payload);
+      const validated = createReadingSchema.safeParse(payload);
+      if (!validated.success) {
+        const flattened = validated.error.flatten().fieldErrors;
+        const nextErrors: Record<string, string> = {};
+        for (const [key, messages] of Object.entries(flattened)) {
+          if (messages && messages.length > 0) nextErrors[key] = messages[0] ?? "Valor inválido";
+        }
+        setErrors(nextErrors);
+        toast.error("Verifique os campos destacados");
+        return;
+      }
 
       const response = await fetch("/api/readings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validatedData),
+        body: JSON.stringify(validated.data),
       });
 
       if (!response.ok) {
@@ -110,9 +134,10 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
               id="ts"
               type="datetime-local"
               value={formData.ts}
-              onChange={(e) => setFormData({ ...formData, ts: e.target.value })}
+              onChange={(e) => setField("ts", e.target.value)}
               required
             />
+            {errors.ts ? <p className="text-xs text-destructive">{errors.ts}</p> : null}
           </div>
 
           <Separator />
@@ -146,10 +171,11 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
                   type="number"
                   step="0.001"
                   value={formData.hydrometer_m3}
-                  onChange={(e) => setFormData({ ...formData, hydrometer_m3: e.target.value })}
+                  onChange={(e) => setField("hydrometer_m3", e.target.value)}
                   placeholder="Ex: 1234.567"
                   required
                 />
+                {errors.hydrometer_m3 ? <p className="text-xs text-destructive">{errors.hydrometer_m3}</p> : null}
               </div>
               
               {formData.hydrometer_status === "exchange" && (
@@ -161,9 +187,12 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
                       type="number"
                       step="0.001"
                       value={formData.hydrometer_final_old}
-                      onChange={(e) => setFormData({ ...formData, hydrometer_final_old: e.target.value })}
+                      onChange={(e) => setField("hydrometer_final_old", e.target.value)}
                       required
                     />
+                    {errors.hydrometer_final_old ? (
+                      <p className="text-xs text-destructive">{errors.hydrometer_final_old}</p>
+                    ) : null}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="hydrometer_initial_new">Inicial do Novo (m³)</Label>
@@ -172,9 +201,12 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
                       type="number"
                       step="0.001"
                       value={formData.hydrometer_initial_new}
-                      onChange={(e) => setFormData({ ...formData, hydrometer_initial_new: e.target.value })}
+                      onChange={(e) => setField("hydrometer_initial_new", e.target.value)}
                       required
                     />
+                    {errors.hydrometer_initial_new ? (
+                      <p className="text-xs text-destructive">{errors.hydrometer_initial_new}</p>
+                    ) : null}
                   </div>
                 </>
               )}
@@ -212,10 +244,11 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
                   type="number"
                   step="0.001"
                   value={formData.horimeter_h}
-                  onChange={(e) => setFormData({ ...formData, horimeter_h: e.target.value })}
+                  onChange={(e) => setField("horimeter_h", e.target.value)}
                   placeholder="Ex: 5678.123"
                   required
                 />
+                {errors.horimeter_h ? <p className="text-xs text-destructive">{errors.horimeter_h}</p> : null}
               </div>
 
               {formData.horimeter_status === "exchange" && (
@@ -227,9 +260,12 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
                       type="number"
                       step="0.001"
                       value={formData.horimeter_final_old}
-                      onChange={(e) => setFormData({ ...formData, horimeter_final_old: e.target.value })}
+                      onChange={(e) => setField("horimeter_final_old", e.target.value)}
                       required
                     />
+                    {errors.horimeter_final_old ? (
+                      <p className="text-xs text-destructive">{errors.horimeter_final_old}</p>
+                    ) : null}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="horimeter_initial_new">Inicial do Novo (h)</Label>
@@ -238,9 +274,12 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
                       type="number"
                       step="0.001"
                       value={formData.horimeter_initial_new}
-                      onChange={(e) => setFormData({ ...formData, horimeter_initial_new: e.target.value })}
+                      onChange={(e) => setField("horimeter_initial_new", e.target.value)}
                       required
                     />
+                    {errors.horimeter_initial_new ? (
+                      <p className="text-xs text-destructive">{errors.horimeter_initial_new}</p>
+                    ) : null}
                   </div>
                 </>
               )}
@@ -254,7 +293,7 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
             <Input
               id="notes"
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) => setField("notes", e.target.value)}
               placeholder="Ex: Manutenção realizada..."
             />
           </div>

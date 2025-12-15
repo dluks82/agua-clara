@@ -33,17 +33,33 @@ export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFor
   
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const parseDecimal = (raw: string) => parseFloat(raw.replace(",", ".").trim());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setFieldErrors({});
 
     try {
       // Converter timestamp para formato ISO se necessário
       let timestamp = formData.ts;
       if (timestamp && !timestamp.includes('Z') && !timestamp.includes('+')) {
         timestamp = new Date(timestamp).toISOString();
+      }
+
+      const hydrometer = parseDecimal(formData.hydrometer_m3);
+      const horimeter = parseDecimal(formData.horimeter_h);
+      const nextFieldErrors: Record<string, string> = {};
+      if (!formData.ts || isNaN(new Date(formData.ts).getTime())) nextFieldErrors.ts = "Data/hora inválida";
+      if (Number.isNaN(hydrometer) || hydrometer < 0) nextFieldErrors.hydrometer_m3 = "Valor inválido";
+      if (Number.isNaN(horimeter) || horimeter < 0) nextFieldErrors.horimeter_h = "Valor inválido";
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFieldErrors(nextFieldErrors);
+        setSubmitting(false);
+        return;
       }
 
       const response = await fetch(`/api/readings/${reading.id}`, {
@@ -53,8 +69,8 @@ export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFor
         },
         body: JSON.stringify({
           ts: timestamp,
-          hydrometer_m3: parseFloat(formData.hydrometer_m3),
-          horimeter_h: parseFloat(formData.horimeter_h),
+          hydrometer_m3: hydrometer,
+          horimeter_h: horimeter,
           notes: formData.notes || null,
         }),
       });
@@ -77,6 +93,12 @@ export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFor
       ...prev,
       [field]: value,
     }));
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   return (
@@ -98,6 +120,7 @@ export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFor
             onChange={(e) => handleInputChange("ts", e.target.value)}
             required
           />
+          {fieldErrors.ts ? <p className="text-xs text-destructive">{fieldErrors.ts}</p> : null}
         </div>
         
         <div className="space-y-2">
@@ -111,6 +134,9 @@ export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFor
             placeholder="0.000"
             required
           />
+          {fieldErrors.hydrometer_m3 ? (
+            <p className="text-xs text-destructive">{fieldErrors.hydrometer_m3}</p>
+          ) : null}
         </div>
       </div>
 
@@ -126,6 +152,7 @@ export function ReadingEditForm({ reading, onSuccess, onCancel }: ReadingEditFor
             placeholder="0.000"
             required
           />
+          {fieldErrors.horimeter_h ? <p className="text-xs text-destructive">{fieldErrors.horimeter_h}</p> : null}
         </div>
         
         <div className="space-y-2">

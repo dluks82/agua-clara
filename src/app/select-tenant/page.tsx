@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SubmitButton } from "@/components/submit-button";
 import { listMemberships, requireUserId } from "@/lib/tenancy";
 import { createTenant, selectTenant } from "./actions";
 import { AutoSelectTenant } from "./select-tenant-client";
+import { Building2, LogIn } from "lucide-react";
 
 export default async function SelectTenantPage({
   searchParams,
@@ -22,16 +23,35 @@ export default async function SelectTenantPage({
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-6">
+      {memberships.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Criar sua primeira organização
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Uma organização (tenant) separa os dados e permissões. Você será <code>owner</code> dessa organização e
+              poderá convidar outras pessoas depois.
+            </div>
+            <form action={createTenant} className="flex flex-col gap-2 sm:flex-row">
+              <Input name="name" placeholder="Nome da organização" required />
+              <SubmitButton type="submit" label="Criar" pendingLabel="Criando..." />
+            </form>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Escolha uma organização</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {memberships.length === 0 && (
-            <div className="text-sm text-muted-foreground">
-              Você ainda não pertence a nenhuma organização. Crie uma abaixo.
-            </div>
-          )}
+          {memberships.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Nenhuma organização disponível.</div>
+          ) : null}
 
           {memberships.map((m) => (
             <form key={m.tenantId} action={selectTenant} className="flex items-center justify-between gap-3">
@@ -42,23 +62,31 @@ export default async function SelectTenantPage({
                   <code>{m.tenantSlug}</code> · <code>{m.role}</code>
                 </div>
               </div>
-              <Button type="submit">Entrar</Button>
+              <SubmitButton
+                type="submit"
+                variant="outline"
+                icon={<LogIn className="h-4 w-4" />}
+                label="Entrar"
+                pendingLabel="Entrando..."
+              />
             </form>
           ))}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Criar organização</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={createTenant} className="flex gap-2">
-            <Input name="name" placeholder="Nome" />
-            <Button type="submit">Criar</Button>
-          </form>
-        </CardContent>
-      </Card>
+      {memberships.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Criar organização</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form action={createTenant} className="flex flex-col gap-2 sm:flex-row">
+              <Input name="name" placeholder="Nome da organização" required />
+              <SubmitButton type="submit" label="Criar" pendingLabel="Criando..." />
+            </form>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

@@ -11,11 +11,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Calendar, AlertTriangle, HelpCircle, Edit, Trash2, Loader2 } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Plus, Calendar, AlertTriangle, Edit, Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toDatetimeLocalValue } from "@/lib/datetime-local";
+import { HelpHint } from "@/components/help-hint";
 
 interface Event {
   id: number;
@@ -40,6 +41,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   
@@ -57,6 +59,24 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
     { value: "calibracao", label: "Calibração", icon: "⚙️" },
     { value: "outro", label: "Outro", icon: "📝" },
   ];
+
+  const setField = (field: keyof EventFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const validateForm = (data: EventFormData) => {
+    const next: Record<string, string> = {};
+    if (!data.ts || isNaN(new Date(data.ts).getTime())) next.ts = "Data/hora inválida";
+    if (!data.type) next.type = "Selecione um tipo";
+    if (!data.description.trim()) next.description = "Descrição é obrigatória";
+    return next;
+  };
 
   const fetchEvents = async () => {
     try {
@@ -81,6 +101,12 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nextErrors = validateForm(formData);
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      setMessage({ type: "error", text: "Verifique os campos destacados" });
+      return;
+    }
     setSubmitting(true);
     setMessage(null);
 
@@ -92,8 +118,8 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
       }
       
       const payload = {
-        description: formData.description,
-        details: formData.details,
+        description: formData.description.trim(),
+        details: formData.details.trim(),
       };
 
       const response = await fetch("/api/events", {
@@ -134,6 +160,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
 
   const handleEditEvent = (event: Event) => {
     setEditingEvent(event);
+    setFieldErrors({});
     const payload = (event.payload ?? {}) as { description?: string; details?: string };
     setFormData({
       ts: toDatetimeLocalValue(new Date(event.ts)),
@@ -146,6 +173,12 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nextErrors = validateForm(formData);
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      setMessage({ type: "error", text: "Verifique os campos destacados" });
+      return;
+    }
     setSubmitting(true);
     setMessage(null);
 
@@ -159,8 +192,8 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
       }
       
       const payload = {
-        description: formData.description,
-        details: formData.details,
+        description: formData.description.trim(),
+        details: formData.details.trim(),
       };
 
       const response = await fetch("/api/events", {
@@ -277,7 +310,16 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
           </div>
           
           {canWrite && (
-            <Dialog open={showForm} onOpenChange={setShowForm}>
+            <Dialog
+              open={showForm}
+              onOpenChange={(open) => {
+                setShowForm(open);
+                if (open) {
+                  setFieldErrors({});
+                  setMessage(null);
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button className="w-full sm:w-auto" aria-label="Novo evento">
                   <Plus className="mr-2 h-4 w-4" />
@@ -297,29 +339,28 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                       id="ts"
                       type="datetime-local"
                       value={formData.ts}
-                      onChange={(e) => setFormData(prev => ({ ...prev, ts: e.target.value }))}
+                      onChange={(e) => setField("ts", e.target.value)}
                       required
                     />
+                    {fieldErrors.ts ? <p className="text-xs text-destructive">{fieldErrors.ts}</p> : null}
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="type">Tipo de Evento</Label>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            Selecione o tipo de evento que melhor descreve a situação. 
-                            Isso ajuda na organização e análise dos dados.
+                      <HelpHint
+                        label="Ajuda: tipo de evento"
+                        content={
+                          <p>
+                            Selecione o tipo de evento que melhor descreve a situação. Isso ajuda na organização e
+                            análise dos dados.
                           </p>
-                        </TooltipContent>
-                      </Tooltip>
+                        }
+                      />
                     </div>
                     <Select
                       value={formData.type}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+                      onValueChange={(value) => setField("type", value)}
                       required
                     >
                       <SelectTrigger>
@@ -336,6 +377,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldErrors.type ? <p className="text-xs text-destructive">{fieldErrors.type}</p> : null}
                   </div>
                 </div>
                 
@@ -344,10 +386,13 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                   <Input
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) => setField("description", e.target.value)}
                     placeholder="Breve descrição do evento"
                     required
                   />
+                  {fieldErrors.description ? (
+                    <p className="text-xs text-destructive">{fieldErrors.description}</p>
+                  ) : null}
                 </div>
                 
                 <div className="space-y-2">
@@ -355,7 +400,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                   <Textarea
                     id="details"
                     value={formData.details}
-                    onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
+                    onChange={(e) => setField("details", e.target.value)}
                     placeholder="Detalhes adicionais, observações, etc."
                     rows={3}
                   />
@@ -521,29 +566,28 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                     id="edit_ts"
                     type="datetime-local"
                     value={formData.ts}
-                    onChange={(e) => setFormData(prev => ({ ...prev, ts: e.target.value }))}
+                    onChange={(e) => setField("ts", e.target.value)}
                     required
                   />
+                  {fieldErrors.ts ? <p className="text-xs text-destructive">{fieldErrors.ts}</p> : null}
                 </div>
                 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="edit_type">Tipo de Evento</Label>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">
-                          Selecione o tipo de evento que melhor descreve a situação. 
-                          Isso ajuda na organização e análise dos dados.
+                    <HelpHint
+                      label="Ajuda: tipo de evento"
+                      content={
+                        <p>
+                          Selecione o tipo de evento que melhor descreve a situação. Isso ajuda na organização e análise
+                          dos dados.
                         </p>
-                      </TooltipContent>
-                    </Tooltip>
+                      }
+                    />
                   </div>
                   <Select
                     value={formData.type}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+                    onValueChange={(value) => setField("type", value)}
                     required
                   >
                     <SelectTrigger>
@@ -560,6 +604,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                       ))}
                     </SelectContent>
                   </Select>
+                  {fieldErrors.type ? <p className="text-xs text-destructive">{fieldErrors.type}</p> : null}
                 </div>
               </div>
               
@@ -568,10 +613,13 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 <Input
                   id="edit_description"
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setField("description", e.target.value)}
                   placeholder="Breve descrição do evento"
                   required
                 />
+                {fieldErrors.description ? (
+                  <p className="text-xs text-destructive">{fieldErrors.description}</p>
+                ) : null}
               </div>
               
               <div className="space-y-2">
@@ -579,7 +627,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
                 <Textarea
                   id="edit_details"
                   value={formData.details}
-                  onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
+                  onChange={(e) => setField("details", e.target.value)}
                   placeholder="Detalhes adicionais, observações, etc."
                   rows={3}
                 />

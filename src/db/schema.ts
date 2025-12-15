@@ -1,4 +1,4 @@
-import { pgTable, serial, timestamp, numeric, text, jsonb, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, timestamp, numeric, text, jsonb, primaryKey, uniqueIndex, index } from "drizzle-orm/pg-core";
 
 export const tenants = pgTable("tenants", {
   id: text("id").primaryKey(),
@@ -33,22 +33,28 @@ export const memberships = pgTable(
   })
 );
 
-export const readings = pgTable("readings", {
-  id: serial("id").primaryKey(),
-  tenant_id: text("tenant_id")
-    .notNull()
-    .references(() => tenants.id, { onDelete: "cascade" }),
-  ts: timestamp("ts", { withTimezone: true }).notNull(),
-  hydrometer_m3: numeric("hydrometer_m3", { precision: 10, scale: 3 }).notNull(),
-  horimeter_h: numeric("horimeter_h", { precision: 10, scale: 3 }).notNull(),
-  notes: text("notes"),
-  hydrometer_status: text("hydrometer_status").default("regular").notNull(),
-  horimeter_status: text("horimeter_status").default("regular").notNull(),
-  hydrometer_final_old: numeric("hydrometer_final_old", { precision: 10, scale: 3 }),
-  hydrometer_initial_new: numeric("hydrometer_initial_new", { precision: 10, scale: 3 }),
-  horimeter_final_old: numeric("horimeter_final_old", { precision: 10, scale: 3 }),
-  horimeter_initial_new: numeric("horimeter_initial_new", { precision: 10, scale: 3 }),
-});
+export const readings = pgTable(
+  "readings",
+  {
+    id: serial("id").primaryKey(),
+    tenant_id: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    ts: timestamp("ts", { withTimezone: true }).notNull(),
+    hydrometer_m3: numeric("hydrometer_m3", { precision: 10, scale: 3 }).notNull(),
+    horimeter_h: numeric("horimeter_h", { precision: 10, scale: 3 }).notNull(),
+    notes: text("notes"),
+    hydrometer_status: text("hydrometer_status").default("regular").notNull(),
+    horimeter_status: text("horimeter_status").default("regular").notNull(),
+    hydrometer_final_old: numeric("hydrometer_final_old", { precision: 10, scale: 3 }),
+    hydrometer_initial_new: numeric("hydrometer_initial_new", { precision: 10, scale: 3 }),
+    horimeter_final_old: numeric("horimeter_final_old", { precision: 10, scale: 3 }),
+    horimeter_initial_new: numeric("horimeter_initial_new", { precision: 10, scale: 3 }),
+  },
+  (t) => ({
+    tenantTsIdx: index("readings_tenant_ts_idx").on(t.tenant_id, t.ts),
+  })
+);
 
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
@@ -61,15 +67,21 @@ export const settings = pgTable("settings", {
   tenantKeyUnique: uniqueIndex("settings_tenant_key_unique").on(t.tenant_id, t.key),
 }));
 
-export const events = pgTable("events", {
-  id: serial("id").primaryKey(),
-  tenant_id: text("tenant_id")
-    .notNull()
-    .references(() => tenants.id, { onDelete: "cascade" }),
-  ts: timestamp("ts", { withTimezone: true }).notNull(),
-  type: text("type").notNull(),
-  payload: jsonb("payload"),
-});
+export const events = pgTable(
+  "events",
+  {
+    id: serial("id").primaryKey(),
+    tenant_id: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    ts: timestamp("ts", { withTimezone: true }).notNull(),
+    type: text("type").notNull(),
+    payload: jsonb("payload"),
+  },
+  (t) => ({
+    tenantTsIdx: index("events_tenant_ts_idx").on(t.tenant_id, t.ts),
+  })
+);
 
 export type Reading = typeof readings.$inferSelect;
 export type NewReading = typeof readings.$inferInsert;

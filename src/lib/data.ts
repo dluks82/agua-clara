@@ -3,12 +3,16 @@ import { readings, settings, Reading } from "@/db/schema";
 import { desc, gte, lte, and, lt, gt, asc, eq } from "drizzle-orm";
 import { calculateIntervals, calculateKPIs } from "@/lib/calculations";
 import { detectAlerts, calculateBaseline } from "@/lib/alerts";
-import { getBillingCycleDay } from "@/app/actions";
 
 export type PeriodFilter = {
   type: "1d" | "7d" | "30d" | "custom";
   from?: Date;
   to?: Date;
+};
+
+export type DashboardPeriod = {
+  from: Date;
+  to: Date;
 };
 
 function interpolateReading(targetDate: Date, prev: Reading, next: Reading): Reading {
@@ -31,66 +35,54 @@ function interpolateReading(targetDate: Date, prev: Reading, next: Reading): Rea
   };
 }
 
-export async function getDashboardData(tenantId: string, filter?: PeriodFilter) {
-  try {
-    let startDate: Date;
-    let endDate: Date = new Date();
-    
-    // 1. Determine Period
-    if (filter?.type && filter.type !== "custom") {
-      switch (filter.type) {
-        case "1d":
-          startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000);
-          break;
-        case "7d":
-          startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case "30d":
-          startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
-      }
-    } else if (filter?.type === "custom" && filter.from && filter.to) {
-      startDate = filter.from;
-      endDate = filter.to;
-    } else {
-      // Default: Current Billing Cycle
-      const cycleDay = await getBillingCycleDay();
-      const now = new Date();
-      const currentDay = now.getDate();
-      
-      let endMonth = now.getMonth();
-      let endYear = now.getFullYear();
-      
-      // If today is AFTER the cycle day, we are in a new cycle that ends next month.
-      // If today is BEFORE or EQUAL to cycle day, we are in the cycle that ends this month.
-      
-      // BUT, the requirement is: "Closing Day is the LAST day of the period".
-      // Example: Closing=7. Today=3.
-      // Cycle ends on 7th of THIS month. (Nov 08 - Dec 07).
-      
-      // Example: Closing=7. Today=8.
-      // Cycle ends on 7th of NEXT month. (Dec 08 - Jan 07).
-      
-      if (currentDay > cycleDay) {
-        endMonth++;
-        if (endMonth > 11) {
-          endMonth = 0;
-          endYear++;
-        }
-      }
-      
-      // End Date = Closing Day of the calculated end month
-      endDate = new Date(endYear, endMonth, cycleDay);
-      endDate.setHours(23, 59, 59, 999); // End of day
-      
-      // Start Date = (End Date - 1 month) + 1 day
-      startDate = new Date(endDate);
-      startDate.setMonth(startDate.getMonth() - 1);
-      startDate.setDate(startDate.getDate() + 1);
-      startDate.setHours(0, 0, 0, 0); // Start of day
+export function resolveDashboardPeriod({
+  searchFrom,
+  searchTo,
+  billingCycleDay,
+  now = new Date(),
+}: {
+  searchFrom?: string;
+  searchTo?: string;
+  billingCycleDay: number;
+  now?: Date;
+}): DashboardPeriod {
+  if (searchFrom && searchTo) {
+    const from = new Date(searchFrom);
+    const to = new Date(searchTo);
+    if (!Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime()) && from <= to) {
+      return { from, to };
     }
+  }
+
+  return billingCycleRange(now, billingCycleDay);
+}
+
+function billingCycleRange(now: Date, cycleDay: number): DashboardPeriod {
+  const currentDay = now.getDate();
+  let endMonth = now.getMonth();
+  let endYear = now.getFullYear();
+
+  if (currentDay > cycleDay) {
+    endMonth++;
+    if (endMonth > 11) {
+      endMonth = 0;
+      endYear++;
+    }
+  }
+
+  const endDate = new Date(endYear, endMonth, cycleDay, 23, 59, 59, 999);
+  const startDate = new Date(endDate);
+  startDate.setMonth(startDate.getMonth() - 1);
+  startDate.setDate(startDate.getDate() + 1);
+  startDate.setHours(0, 0, 0, 0);
+
+  return { from: startDate, to: endDate };
+}
+
+export async function getDashboardData(tenantId: string, period: DashboardPeriod) {
+  try {
+    const startDate = period.from;
+    const endDate = period.to;
 
     // 2. Fetch Readings in Range
     const readingsInRange = await db
@@ -161,7 +153,7 @@ export async function getDashboardData(tenantId: string, filter?: PeriodFilter) 
     const kpis = calculateKPIs(intervals);
     const baseline = calculateBaseline(intervals, 7, settingsObject);
     const alerts = detectAlerts(intervals, baseline || undefined, settingsObject);
-    
+
     return {
       readings: finalReadings,
       intervals,

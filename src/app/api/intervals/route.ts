@@ -46,7 +46,8 @@ export async function GET(request: NextRequest) {
     
     const intervals = calculateIntervals(readingsData);
     const kpis = calculateKPIs(intervals);
-    const baseline = calculateBaseline(intervals, 7, settingsObject);
+    const baselineAsOf = validatedParams.to ? new Date(validatedParams.to) : new Date();
+    const baseline = calculateBaseline(intervals, 7, settingsObject, baselineAsOf);
     const alerts = detectAlerts(intervals, baseline || undefined, settingsObject);
     
     return NextResponse.json({

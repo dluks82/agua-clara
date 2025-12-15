@@ -3,7 +3,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { format, startOfDay, differenceInDays, addDays } from "date-fns";
+import { format, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertTriangle } from "lucide-react";
 
@@ -56,7 +56,7 @@ export function ProductionChart({ data }: ProductionChartProps) {
     let currentDate = new Date(startDate);
     
     while (currentDate <= endDate) {
-      const dateKey = currentDate.toISOString().split('T')[0];
+      const dateKey = format(currentDate, "yyyy-MM-dd");
       const nextDay = new Date(currentDate);
       nextDay.setDate(nextDay.getDate() + 1);
       nextDay.setHours(0, 0, 0, 0);
@@ -110,7 +110,7 @@ export function ProductionChart({ data }: ProductionChartProps) {
     
     if (isDailyReading) {
       // LEITURA REAL: Intervalo de ~24h, produção acontece no dia da leitura final
-      const dateKey = endDate.toISOString().split('T')[0];
+      const dateKey = format(endDate, "yyyy-MM-dd");
       
       if (!acc[dateKey]) {
         acc[dateKey] = {
@@ -126,7 +126,7 @@ export function ProductionChart({ data }: ProductionChartProps) {
       acc[dateKey].hours += item.delta_h;
     } else if (daysDiff === 0) {
       // Intervalo de 1 dia mas não é leitura diária (horário muito diferente)
-      const dateKey = endDate.toISOString().split('T')[0];
+      const dateKey = format(endDate, "yyyy-MM-dd");
       
       if (!acc[dateKey]) {
         acc[dateKey] = {
@@ -181,7 +181,7 @@ export function ProductionChart({ data }: ProductionChartProps) {
 
     for (let i = 1; i <= 7; i++) {
       const futureDate = addDays(lastDate, i);
-      const dateKey = futureDate.toISOString().split('T')[0];
+      const dateKey = format(futureDate, "yyyy-MM-dd");
       
       dailyProduction[dateKey] = {
         date: dateKey,

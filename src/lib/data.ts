@@ -32,6 +32,12 @@ function interpolateReading(targetDate: Date, prev: Reading, next: Reading): Rea
     hydrometer_m3: hydrometer_m3.toFixed(3),
     horimeter_h: horimeter_h.toFixed(3),
     notes: "Leitura Virtual (Pro-Rata)",
+    hydrometer_status: "regular",
+    horimeter_status: "regular",
+    hydrometer_final_old: null,
+    hydrometer_initial_new: null,
+    horimeter_final_old: null,
+    horimeter_initial_new: null,
   };
 }
 
@@ -177,7 +183,7 @@ export async function getDashboardData(tenantId: string, period: DashboardPeriod
 
     const intervals = calculateIntervals(finalReadings);
     const kpis = calculateKPIs(intervals);
-    const baseline = calculateBaseline(intervals, 7, settingsObject);
+    const baseline = calculateBaseline(intervals, 7, settingsObject, endDate);
     const alerts = detectAlerts(intervals, baseline || undefined, settingsObject);
 
     return {

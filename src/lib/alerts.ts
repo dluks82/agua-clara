@@ -73,7 +73,12 @@ export function detectAlerts(intervals: Interval[], baseline?: number, settings?
   return alerts;
 }
 
-export function calculateBaseline(intervals: Interval[], days: number = 7, settings?: Record<string, string>): number | null {
+export function calculateBaseline(
+  intervals: Interval[],
+  days: number = 7,
+  settings?: Record<string, string>,
+  asOf: Date = new Date()
+): number | null {
   // Usar configurações se disponíveis
   const baselineDays = parseInt(settings?.baseline_days || String(days));
   const minIntervals = parseInt(settings?.baseline_min_intervals || "5");
@@ -83,7 +88,7 @@ export function calculateBaseline(intervals: Interval[], days: number = 7, setti
   if (validIntervals.length === 0) return null;
   
   // Pegar os últimos N dias de intervalos válidos
-  const cutoffDate = new Date();
+  const cutoffDate = new Date(asOf);
   cutoffDate.setDate(cutoffDate.getDate() - baselineDays);
   
   const recentIntervals = validIntervals.filter(i => 

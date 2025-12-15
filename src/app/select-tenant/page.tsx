@@ -5,11 +5,18 @@ import { listMemberships, requireUserId } from "@/lib/tenancy";
 import { createTenant, selectTenant } from "./actions";
 import { AutoSelectTenant } from "./select-tenant-client";
 
-export default async function SelectTenantPage() {
+export default async function SelectTenantPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ force?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const force = resolvedSearchParams.force === "1";
+
   const userId = await requireUserId();
   const memberships = await listMemberships(userId);
 
-  if (memberships.length === 1) {
+  if (!force && memberships.length === 1) {
     return <AutoSelectTenant tenantId={memberships[0].tenantId} selectTenantAction={selectTenant} />;
   }
 

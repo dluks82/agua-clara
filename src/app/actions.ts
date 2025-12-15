@@ -48,5 +48,5 @@ export async function clearActiveTenant() {
   await requireUserId();
   const cookieStore = await cookies();
   cookieStore.delete(ACTIVE_TENANT_COOKIE);
-  redirect("/select-tenant");
+  redirect("/select-tenant?force=1");
 }

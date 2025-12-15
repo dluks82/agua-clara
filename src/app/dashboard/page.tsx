@@ -13,6 +13,9 @@ import { HelpHint } from "@/components/help-hint";
 import { DashboardCharts } from "@/app/dashboard/dashboard-charts";
 import { unstable_cache } from "next/cache";
 import { NewReadingDialog } from "@/app/dashboard/new-reading-dialog";
+import { db } from "@/db";
+import { readings } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 
 function getCachedDashboardData(tenantId: string) {
   return unstable_cache(
@@ -45,6 +48,43 @@ export default async function DashboardPage({
   const data = await getCachedDashboardData(tenantId)(period.from.toISOString(), period.to.toISOString());
   const canWrite = role !== "viewer";
 
+  const lastReading = await (async () => {
+    try {
+      const rows = await db
+        .select({
+          ts: readings.ts,
+          hydrometer_m3: readings.hydrometer_m3,
+          horimeter_h: readings.horimeter_h,
+        })
+        .from(readings)
+        .where(eq(readings.tenant_id, tenantId))
+        .orderBy(desc(readings.ts))
+        .limit(1);
+      return rows[0] ?? null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const productionEstimateM3 = (() => {
+    if (!showForecast) return null;
+    if (data.intervals.length === 0) return null;
+
+    const latestTs = data.readings
+      .map((r) => r.ts)
+      .filter((ts) => period.from <= ts && ts <= period.to)
+      .reduce<Date | null>((max, ts) => (max && max > ts ? max : ts), null);
+    if (!latestTs) return null;
+
+    const totalSpanMs = period.to.getTime() - period.from.getTime();
+    const elapsedMs = latestTs.getTime() - period.from.getTime();
+    if (totalSpanMs <= 0 || elapsedMs <= 0) return null;
+
+    const producedSoFar = data.kpis.producao_total_m3;
+    const estimate = (producedSoFar / elapsedMs) * totalSpanMs;
+    return Math.max(producedSoFar, estimate);
+  })();
+
   return (
     <TooltipProvider>
       <div className="space-y-6">
@@ -66,6 +106,56 @@ export default async function DashboardPage({
             {canWrite ? <NewReadingDialog variant="outline" /> : null}
             <ExportButton />
           </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Última leitura</CardTitle>
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="space-y-1">
+              {lastReading ? (
+                <>
+                  <div className="text-sm text-muted-foreground">{formatPtBrDateTime(lastReading.ts)}</div>
+                  <div className="text-base font-semibold">
+                    {Number.parseFloat(lastReading.hydrometer_m3).toFixed(2)} m³ ·{" "}
+                    {Number.parseFloat(lastReading.horimeter_h).toFixed(1)} h
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground">Nenhuma leitura registrada ainda.</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium">Estimativa do período</CardTitle>
+                <HelpHint
+                  label="Ajuda: estimativa do período"
+                  content={
+                    <p>
+                      Projeção simples baseada no ritmo de produção observado até a última leitura do período. Use como
+                      referência (não é uma previsão oficial).
+                    </p>
+                  }
+                />
+              </div>
+              <Droplets className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="space-y-1">
+              {productionEstimateM3 ? (
+                <>
+                  <div className="text-2xl font-bold">{productionEstimateM3.toFixed(1)} m³</div>
+                  <div className="text-xs text-muted-foreground">Estimativa para o período selecionado</div>
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground">Disponível quando há leituras no período atual.</div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Alertas */}
@@ -264,4 +354,16 @@ export default async function DashboardPage({
       </div>
     </TooltipProvider>
   );
+}
+
+function formatPtBrDateTime(date: Date) {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "America/Sao_Paulo",
+    }).format(date);
+  } catch {
+    return date.toISOString();
+  }
 }

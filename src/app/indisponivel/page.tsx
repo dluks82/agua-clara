@@ -1,3 +1,5 @@
+"use client";
+
 import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,8 +17,13 @@ export default function IndisponivelPage() {
           novamente.
         </p>
       </div>
-      <Button onClick={() => location.reload()}>Tentar novamente</Button>
+      <Button
+        onClick={() => {
+          location.reload();
+        }}
+      >
+        Tentar novamente
+      </Button>
     </div>
   );
 }
-

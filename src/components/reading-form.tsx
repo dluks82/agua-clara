@@ -8,6 +8,7 @@ import { createReadingSchema } from "@/lib/validations/readings";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import type { CreateReadingInput } from "@/lib/validations/readings";
+import { toDatetimeLocalValue } from "@/lib/datetime-local";
 
 interface ReadingFormProps {
   onSuccess?: () => void;
@@ -17,7 +18,7 @@ type EquipmentStatus = "regular" | "rollover" | "exchange";
 
 export function ReadingForm({ onSuccess }: ReadingFormProps) {
   const [formData, setFormData] = useState({
-    ts: new Date().toISOString().slice(0, 16),
+    ts: toDatetimeLocalValue(),
     hydrometer_m3: "",
     horimeter_h: "",
     notes: "",
@@ -75,7 +76,7 @@ export function ReadingForm({ onSuccess }: ReadingFormProps) {
 
       toast.success("Leitura cadastrada com sucesso!");
       setFormData({
-        ts: new Date().toISOString().slice(0, 16),
+        ts: toDatetimeLocalValue(),
         hydrometer_m3: "",
         horimeter_h: "",
         notes: "",

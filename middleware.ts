@@ -1,26 +1,18 @@
 import { NextResponse } from "next/server";
-
-import { auth } from "@/auth";
-import type { NextRequest } from "next/server";
-
-type AuthRequest = NextRequest & {
-  auth?: { user?: { id?: string } } | null;
-};
+import { withAuth, type NextRequestWithAuth } from "next-auth/middleware";
 
 const publicPaths = new Set<string>(["/login"]);
 const tenantSelectPaths = new Set<string>(["/select-tenant"]);
 
-export default auth((req: AuthRequest) => {
+export default withAuth(
+  function middleware(req: NextRequestWithAuth) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
 
-  if (pathname.startsWith("/api/auth")) return;
-  if (pathname.startsWith("/api/migrations")) return;
-  if (pathname.startsWith("/api")) return;
   if (pathname.startsWith("/_next")) return;
   if (pathname === "/favicon.ico") return;
 
-  const isLoggedIn = !!req.auth?.user?.id;
+  const isLoggedIn = typeof req.nextauth?.token?.userId === "string";
   if (!isLoggedIn && !publicPaths.has(pathname)) {
     const url = new URL("/login", nextUrl);
     return NextResponse.redirect(url);
@@ -35,8 +27,18 @@ export default auth((req: AuthRequest) => {
   }
 
   return;
-});
+  },
+  {
+    callbacks: {
+      authorized: ({ req, token }) => {
+        const pathname = req.nextUrl.pathname;
+        if (publicPaths.has(pathname)) return true;
+        return typeof token?.userId === "string";
+      },
+    },
+  }
+);
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

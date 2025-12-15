@@ -37,13 +37,16 @@ export function OrganizationSwitcher({
           variant="ghost"
           size="sm"
           className={cn(
-            "h-auto px-1 py-0 text-xs text-muted-foreground hover:text-foreground",
-            "cursor-pointer"
+            "mt-1 h-7 w-fit max-w-[18rem] justify-between gap-2 rounded-md px-2",
+            "bg-muted/40 text-foreground hover:bg-muted"
           )}
-          aria-label="Trocar organização"
+          aria-label="Escolher organização"
         >
-          <span className="truncate">{label}</span>
-          <ChevronsUpDown className="ml-1 size-3 opacity-70" />
+          <span className="flex min-w-0 items-center gap-1">
+            <span className="shrink-0 text-muted-foreground">Organização:</span>
+            <span className="truncate font-medium">{label}</span>
+          </span>
+          <ChevronsUpDown className="size-3 opacity-70" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-2">

@@ -11,6 +11,7 @@ import type { Role } from "@/lib/rbac";
 import { hasRole } from "@/lib/rbac";
 
 export const ACTIVE_TENANT_COOKIE = "ac_tenant";
+const UNAVAILABLE_PATH = "/indisponivel";
 
 export type TenantMembership = {
   tenantId: string;
@@ -27,17 +28,27 @@ export async function requireUserId(): Promise<string> {
 }
 
 export async function listMemberships(userId: string): Promise<TenantMembership[]> {
-  const rows = await db
-    .select({
-      tenantId: memberships.tenant_id,
-      role: memberships.role,
-      tenantName: tenants.name,
-      tenantSlug: tenants.slug,
-    })
-    .from(memberships)
-    .innerJoin(tenants, eq(tenants.id, memberships.tenant_id))
-    .where(eq(memberships.user_id, userId))
-    .orderBy(tenants.name);
+  let rows: Array<{
+    tenantId: string;
+    role: string;
+    tenantName: string;
+    tenantSlug: string;
+  }>;
+  try {
+    rows = await db
+      .select({
+        tenantId: memberships.tenant_id,
+        role: memberships.role,
+        tenantName: tenants.name,
+        tenantSlug: tenants.slug,
+      })
+      .from(memberships)
+      .innerJoin(tenants, eq(tenants.id, memberships.tenant_id))
+      .where(eq(memberships.user_id, userId))
+      .orderBy(tenants.name);
+  } catch {
+    redirect(UNAVAILABLE_PATH);
+  }
 
   return rows.map((row) => ({
     tenantId: row.tenantId,
@@ -53,9 +64,15 @@ export async function requireTenant(requiredRole: Role = "viewer") {
   const activeTenantId = cookieStore.get(ACTIVE_TENANT_COOKIE)?.value;
   if (!activeTenantId) redirect("/select-tenant");
 
-  const membership = await db.query.memberships.findFirst({
-    where: and(eq(memberships.user_id, userId), eq(memberships.tenant_id, activeTenantId)),
-  });
+  let membership: typeof memberships.$inferSelect | null = null;
+  try {
+    membership =
+      (await db.query.memberships.findFirst({
+        where: and(eq(memberships.user_id, userId), eq(memberships.tenant_id, activeTenantId)),
+      })) ?? null;
+  } catch {
+    redirect(UNAVAILABLE_PATH);
+  }
 
   if (!membership) redirect("/select-tenant");
   const role = membership.role as Role;
@@ -65,21 +82,5 @@ export async function requireTenant(requiredRole: Role = "viewer") {
 }
 
 export async function assertTenant(requiredRole: Role = "viewer") {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) throw new Error("Não autenticado");
-
-  const cookieStore = await cookies();
-  const activeTenantId = cookieStore.get(ACTIVE_TENANT_COOKIE)?.value;
-  if (!activeTenantId) throw new Error("Tenant não selecionado");
-
-  const membership = await db.query.memberships.findFirst({
-    where: and(eq(memberships.user_id, userId), eq(memberships.tenant_id, activeTenantId)),
-  });
-  if (!membership) throw new Error("Acesso ao tenant negado");
-
-  const role = membership.role as Role;
-  if (!hasRole(role, requiredRole)) throw new Error("Permissão insuficiente");
-
-  return { userId, tenantId: activeTenantId, role };
+  return requireTenant(requiredRole);
 }

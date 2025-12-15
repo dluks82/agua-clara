@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -279,14 +279,15 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
           {canWrite && (
             <Dialog open={showForm} onOpenChange={setShowForm}>
               <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto" aria-label="Novo evento">
                   <Plus className="mr-2 h-4 w-4" />
-                  Novo Evento
+                  Novo evento
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Registrar Novo Evento</DialogTitle>
+                  <DialogDescription>Registre um evento operacional para o período selecionado.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -510,6 +511,7 @@ export default function EventosClient({ canWrite }: { canWrite: boolean }) {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Editar Evento</DialogTitle>
+                <DialogDescription>Atualize os dados do evento e salve.</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleEditSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

@@ -8,7 +8,7 @@ export const createReadingSchema = z.object({
   }, "Timestamp deve ser uma data/hora válida"),
   hydrometer_m3: z.number().min(0, "Hidrômetro deve ser maior ou igual a 0"),
   horimeter_h: z.number().min(0, "Horímetro deve ser maior ou igual a 0"),
-  notes: z.string().optional(),
+  notes: z.preprocess((val) => (val === null ? undefined : val), z.string().optional()),
   hydrometer_status: z.enum(["regular", "rollover", "exchange"]).default("regular"),
   horimeter_status: z.enum(["regular", "rollover", "exchange"]).default("regular"),
   hydrometer_final_old: z.number().optional(),

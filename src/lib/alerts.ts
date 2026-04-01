@@ -61,23 +61,26 @@ export function detectAlerts(intervals: Interval[], baseline?: number, settings?
     }
   }
   
-  // Detectar inconsistências de dados
+  // Detectar inconsistências de dados (deduplica: máximo 1 alerta por tipo)
+  let zeroHCount = 0;
+  let negativeVCount = 0;
   for (const interval of intervals) {
-    if (interval.delta_h === 0 && interval.delta_v > 0) {
-      alerts.push({
-        type: "inconsistencia_dados",
-        message: "Inconsistência: ΔH = 0 com ΔV > 0. Verifique as leituras.",
-        severity: "high",
-      });
-    }
-    
-    if (interval.delta_v < 0) {
-      alerts.push({
-        type: "inconsistencia_dados",
-        message: "Inconsistência: ΔV < 0. Hidrômetro regrediu - verifique digitação ou troca de medidor.",
-        severity: "high",
-      });
-    }
+    if (interval.delta_h === 0 && interval.delta_v > 0) zeroHCount++;
+    if (interval.delta_v < 0) negativeVCount++;
+  }
+  if (zeroHCount > 0) {
+    alerts.push({
+      type: "inconsistencia_dados",
+      message: `Inconsistência: ΔH = 0 com ΔV > 0 em ${zeroHCount} intervalo(s). Verifique as leituras.`,
+      severity: "high",
+    });
+  }
+  if (negativeVCount > 0) {
+    alerts.push({
+      type: "inconsistencia_dados",
+      message: `Inconsistência: ΔV < 0 em ${negativeVCount} intervalo(s). Hidrômetro regrediu — verifique digitação ou troca de medidor.`,
+      severity: "high",
+    });
   }
 
   // Detectar sobrecarga contínua de motor (Opção B - Aumento em relação ao histórico recente)
@@ -154,13 +157,14 @@ export function detectAlerts(intervals: Interval[], baseline?: number, settings?
 
 export function calculateBaseline(
   intervals: Interval[],
-  days: number = 7,
+  days: number = 30,
   settings?: Record<string, string>,
   asOf: Date = new Date()
 ): number | null {
   // Usar configurações se disponíveis
+  // Default: 30 dias para capturar ~6-10 intervalos com leituras a cada 3-5 dias
   const baselineDays = parseInt(settings?.baseline_days || String(days));
-  const minIntervals = parseInt(settings?.baseline_min_intervals || "5");
+  const minIntervals = parseInt(settings?.baseline_min_intervals || "3");
   
   const validIntervals = intervals.filter(i => i.q_m3h !== null && i.confidence === "ALTA");
   

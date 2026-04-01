@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ExportButton } from "@/components/export-button";
 import { PeriodNavigator } from "@/components/period-navigator";
 import { getBillingCycleDay } from "@/app/actions";
-import { AlertTriangle, Droplets, Clock, Activity, ClipboardList } from "lucide-react";
+import { AlertTriangle, Droplets, Clock, Activity, ClipboardList, ShieldCheck } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireTenant } from "@/lib/tenancy";
 import Link from "next/link";
@@ -141,7 +141,7 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Última leitura</CardTitle>
@@ -183,18 +183,18 @@ export default async function DashboardPage({
                 <>
                   <div className="text-2xl font-bold">{productionEstimateM3.toFixed(1)} m³</div>
                   <div className="text-xs text-muted-foreground">Estimativa para o fechamento do período</div>
-                  <TrendBadge 
-                    current={productionEstimateM3} 
-                    previous={data.previousKpisFull?.producao_total_m3} 
+                  <TrendBadge
+                    current={productionEstimateM3}
+                    previous={data.previousKpisFull?.producao_total_m3}
                   />
                 </>
               ) : !showForecast ? (
                 <>
                   <div className="text-2xl font-bold">{data.kpis.producao_total_m3.toFixed(1)} m³</div>
                   <div className="text-xs text-muted-foreground">Produção confirmada no período selecionado</div>
-                  <TrendBadge 
-                    current={data.kpis.producao_total_m3} 
-                    previous={data.previousKpisFull?.producao_total_m3} 
+                  <TrendBadge
+                    current={data.kpis.producao_total_m3}
+                    previous={data.previousKpisFull?.producao_total_m3}
                   />
                 </>
               ) : (
@@ -204,6 +204,8 @@ export default async function DashboardPage({
               )}
             </CardContent>
           </Card>
+
+          <DataQualityCard dataQuality={data.dataQuality} />
         </div>
 
         {/* Alertas */}
@@ -408,6 +410,60 @@ function TrendBadge({ current, previous, inverse = false }: { current: number | 
       <Icon className="w-3 h-3 mr-1"/>
       {isPositive ? "+" : ""}{pct.toFixed(1)}% vs. anterior
     </span>
+  );
+}
+
+function DataQualityCard({ dataQuality }: { dataQuality: import("@/lib/data-quality").DataQuality | null }) {
+  const levelColor = dataQuality
+    ? dataQuality.level === "ALTA"
+      ? "text-emerald-500"
+      : dataQuality.level === "MÉDIA"
+        ? "text-amber-500"
+        : "text-destructive"
+    : "text-muted-foreground";
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-sm font-medium">Qualidade dos Dados</CardTitle>
+          <HelpHint
+            label="Ajuda: qualidade dos dados"
+            content={
+              <div className="space-y-1 text-sm">
+                <p>
+                  Indica o quão confiáveis são os KPIs com base no comportamento de registro de
+                  leituras no período — não avalia as leituras em si.
+                </p>
+                <p className="font-medium">Fatores avaliados:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Frequência (40%) — intervalo médio entre leituras</li>
+                  <li>Regularidade (25%) — consistência dos intervalos</li>
+                  <li>Cobertura (20%) — proporção do período com leituras</li>
+                  <li>Gaps (15%) — ausência de lacunas longas</li>
+                </ul>
+              </div>
+            }
+          />
+        </div>
+        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent className="space-y-1">
+        {dataQuality ? (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold">{dataQuality.score}</span>
+              <span className={`text-sm font-semibold ${levelColor}`}>{dataQuality.level}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {dataQuality.recommendations[0]}
+            </p>
+          </>
+        ) : (
+          <div className="text-sm text-muted-foreground">Sem dados suficientes para avaliar.</div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

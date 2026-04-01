@@ -3,6 +3,7 @@ import { readings, settings, Reading } from "@/db/schema";
 import { sql, desc, gte, lte, and, lt, gt, eq } from "drizzle-orm";
 import { calculateIntervals, calculateKPIs } from "@/lib/calculations";
 import { detectAlerts, calculateBaseline } from "@/lib/alerts";
+import { calculateDataQuality } from "@/lib/data-quality";
 
 export type PeriodFilter = {
   type: "1d" | "7d" | "30d" | "custom";
@@ -183,13 +184,14 @@ export async function getDashboardData(tenantId: string, period: DashboardPeriod
 
     const intervals = calculateIntervals(finalReadings);
     const kpis = calculateKPIs(intervals);
-    const baseline = calculateBaseline(intervals, 7, settingsObject, endDate);
+    const baseline = calculateBaseline(intervals, 30, settingsObject, endDate);
     // For gap alerts, use the effective reference date:
     // - Current period: min(endDate, now) — don't compare against a future date
     // - Past period: endDate — the period is closed
     const now = new Date();
     const alertsAsOf = endDate > now ? now : endDate;
     const alerts = detectAlerts(intervals, baseline || undefined, settingsObject, alertsAsOf);
+    const dataQuality = calculateDataQuality(intervals, startDate, endDate, parseInt(settingsObject.alert_gap_days || "7"));
 
     return {
       readings: finalReadings,
@@ -197,6 +199,7 @@ export async function getDashboardData(tenantId: string, period: DashboardPeriod
       kpis,
       alerts,
       baseline,
+      dataQuality,
       period: {
         from: startDate,
         to: endDate
@@ -218,6 +221,7 @@ export async function getDashboardData(tenantId: string, period: DashboardPeriod
       },
       alerts: [],
       baseline: null,
+      dataQuality: null,
       period: {
         from: new Date(),
         to: new Date()

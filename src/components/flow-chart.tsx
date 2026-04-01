@@ -21,6 +21,21 @@ interface FlowChartProps {
   data: FlowData[];
 }
 
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payload: { dateLabel: string; l_min: number | null; q_m3h: number | null; confidence: string } }[] }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-md text-sm space-y-1">
+      <p className="font-medium">{d.dateLabel}</p>
+      <p>Vazão: {d.l_min?.toFixed(1)} L/min</p>
+      {d.q_m3h != null && <p className="text-muted-foreground">{d.q_m3h.toFixed(2)} m³/h</p>}
+      <p className="text-xs text-muted-foreground">
+        Confiança: {d.confidence === "ALTA" ? "Alta" : "Baixa"}
+      </p>
+    </div>
+  );
+}
+
 export function FlowChart({ data }: FlowChartProps) {
   if (data.length === 0) {
     return (
@@ -29,7 +44,7 @@ export function FlowChart({ data }: FlowChartProps) {
           <CardTitle>Gráfico de Vazão</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+          <div className="h-[260px] flex items-center justify-center text-muted-foreground">
             Sem dados de vazão disponíveis
           </div>
         </CardContent>
@@ -42,7 +57,7 @@ export function FlowChart({ data }: FlowChartProps) {
     .map(item => ({
       ...item,
       timestamp: new Date(item.end).getTime(),
-      dateLabel: format(new Date(item.end), "dd/MM HH:mm", { locale: ptBR }),
+      dateLabel: format(new Date(item.end), "dd/MM", { locale: ptBR }),
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -53,29 +68,32 @@ export function FlowChart({ data }: FlowChartProps) {
       </CardHeader>
       <CardContent>
         <ChartFrame
-          height={300}
+          height={260}
           className="w-full min-w-0"
           placeholder={<div className="flex h-full items-center justify-center text-muted-foreground">Carregando…</div>}
         >
           {({ width, height }) => (
-            <LineChart data={chartData} width={width} height={height}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="dateLabel" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={60} />
+            <LineChart
+              data={chartData}
+              width={width}
+              height={height}
+              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="dateLabel" tick={{ fontSize: 11 }} />
               <YAxis
-                label={{ value: "Vazão (L/min)", angle: -90, position: "insideLeft" }}
-                tick={{ fontSize: 12 }}
+                label={{ value: "Vazão (L/min)", angle: -90, position: "insideLeft", style: { fontSize: 11 } }}
+                tick={{ fontSize: 11 }}
+                width={50}
               />
-              <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)} L/min`, "Vazão"]}
-                labelFormatter={(label) => `Data: ${label}`}
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Line
                 type="monotone"
                 dataKey="l_min"
                 stroke="#2563eb"
                 strokeWidth={2}
-                dot={{ fill: "#2563eb", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#2563eb", strokeWidth: 2 }}
+                dot={{ fill: "#2563eb", strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5, stroke: "#2563eb", strokeWidth: 2 }}
               />
             </LineChart>
           )}

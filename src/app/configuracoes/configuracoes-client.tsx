@@ -18,15 +18,17 @@ interface SettingsData {
   // Alertas
   alert_flow_drop_threshold?: string;
   alert_cov_threshold?: string;
+  alert_overload_threshold?: string;
+  alert_gap_days?: string;
   alert_enabled?: string;
 
   // Faturamento
   billing_cycle_day?: string;
-  
+
   // Baseline
   baseline_days?: string;
   baseline_min_intervals?: string;
-  
+
   // Sistema
   system_name?: string;
   system_description?: string;
@@ -277,6 +279,64 @@ export default function ConfiguracoesClient() {
                 Alerta quando Coeficiente de Variação exceder X%
               </p>
             </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="alert_overload_threshold">
+                  Limiar de Sobrecarga (%)
+                </Label>
+                <HelpHint
+                  label="Ajuda: limiar de sobrecarga"
+                  content={
+                    <p>
+                      Percentual de aumento nas horas de operação/dia em relação ao histórico recente para gerar alerta de
+                      sobrecarga do motor. Exemplo: 30% significa alerta se a bomba estiver rodando 30% mais que o habitual.
+                    </p>
+                  }
+                />
+              </div>
+              <Input
+                id="alert_overload_threshold"
+                type="number"
+                value={settings.alert_overload_threshold || "30"}
+                onChange={(e) => handleInputChange("alert_overload_threshold", e.target.value)}
+                placeholder="30"
+                min="10"
+                max="100"
+              />
+              <p className="text-xs text-muted-foreground">
+                Alerta quando horas/dia aumentar X% acima do habitual
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="alert_gap_days">
+                  Limiar de Gap (dias)
+                </Label>
+                <HelpHint
+                  label="Ajuda: limiar de gap"
+                  content={
+                    <p>
+                      Número máximo de dias sem leituras antes de gerar alerta. Considere o intervalo habitual de leituras
+                      do seu sistema (tipicamente 2-5 dias).
+                    </p>
+                  }
+                />
+              </div>
+              <Input
+                id="alert_gap_days"
+                type="number"
+                value={settings.alert_gap_days || "7"}
+                onChange={(e) => handleInputChange("alert_gap_days", e.target.value)}
+                placeholder="7"
+                min="1"
+                max="30"
+              />
+              <p className="text-xs text-muted-foreground">
+                Alerta quando não houver leituras por mais de X dias
+              </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -309,11 +369,11 @@ export default function ConfiguracoesClient() {
               <Input
                 id="baseline_days"
                 type="number"
-                value={settings.baseline_days || "7"}
+                value={settings.baseline_days || "30"}
                 onChange={(e) => handleInputChange("baseline_days", e.target.value)}
-                placeholder="7"
-                min="1"
-                max="30"
+                placeholder="30"
+                min="7"
+                max="90"
               />
               <p className="text-xs text-muted-foreground">
                 Número de dias para calcular o baseline
@@ -338,11 +398,11 @@ export default function ConfiguracoesClient() {
               <Input
                 id="baseline_min_intervals"
                 type="number"
-                value={settings.baseline_min_intervals || "5"}
+                value={settings.baseline_min_intervals || "3"}
                 onChange={(e) => handleInputChange("baseline_min_intervals", e.target.value)}
-                placeholder="5"
-                min="1"
-                max="50"
+                placeholder="3"
+                min="2"
+                max="20"
               />
               <p className="text-xs text-muted-foreground">
                 Mínimo de intervalos para calcular baseline

@@ -65,10 +65,13 @@ export function resolveDashboardPeriod({
 }
 
 export function billingCycleRange(now: Date, cycleDay: number): DashboardPeriod {
-  const currentDay = now.getDate();
-  let endMonth = now.getMonth();
-  let endYear = now.getFullYear();
+  // Ajusta o 'now' para o tempo local BRT (-3h ou -10800000ms) para extração correta dos dias
+  const brtTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+  const currentDay = brtTime.getUTCDate();
+  let endMonth = brtTime.getUTCMonth();
+  let endYear = brtTime.getUTCFullYear();
 
+  // Avança o mês de fechamento se já passamos do dia
   if (currentDay > cycleDay) {
     endMonth++;
     if (endMonth > 11) {
@@ -77,11 +80,12 @@ export function billingCycleRange(now: Date, cycleDay: number): DashboardPeriod 
     }
   }
 
-  const endDate = new Date(endYear, endMonth, cycleDay, 23, 59, 59, 999);
-  const startDate = new Date(endDate);
-  startDate.setMonth(startDate.getMonth() - 1);
-  startDate.setDate(startDate.getDate() + 1);
-  startDate.setHours(0, 0, 0, 0);
+  // Define os limites exatamente em BRT (adicionando +3 horas para compensar UTC)
+  // Fim: dia do ciclo, 23:59:59 BRT == dia do ciclo, 26:59:59 UTC (vaza pro dia seguinte)
+  const endDate = new Date(Date.UTC(endYear, endMonth, cycleDay, 23 + 3, 59, 59, 999));
+  
+  // Início: mês anterior, dia do ciclo + 1, 00:00:00 BRT == 03:00:00 UTC
+  const startDate = new Date(Date.UTC(endYear, endMonth - 1, cycleDay + 1, 3, 0, 0, 0));
 
   return { from: startDate, to: endDate };
 }

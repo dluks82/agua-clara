@@ -27,7 +27,7 @@ export const kpisSchema = z.object({
 });
 
 export const alertSchema = z.object({
-  type: z.enum(["queda_vazao", "oscilacao_alta", "inconsistencia_dados"]),
+  type: z.enum(["queda_vazao", "oscilacao_alta", "inconsistencia_dados", "sobrecarga_motor", "gap_leitura"]),
   message: z.string(),
   severity: z.enum(["low", "medium", "high"]),
 });

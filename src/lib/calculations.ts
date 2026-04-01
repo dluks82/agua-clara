@@ -34,8 +34,9 @@ function calculateDelta(
     return Math.max(0, (currVal + magnitude) - prevVal);
   }
 
-  // Regular
-  return Math.max(0, currVal - prevVal);
+  // Regular — do NOT clamp to 0. A negative delta indicates a data entry error
+  // (e.g., meter value typed wrong) and should flow through to alerts for detection.
+  return currVal - prevVal;
 }
 
 export function calculateIntervals(readings: Reading[]): Interval[] {
@@ -72,12 +73,12 @@ export function calculateIntervals(readings: Reading[]): Interval[] {
     let l_min: number | null = null;
     let l_s: number | null = null;
     
-    if (delta_h > 0 && delta_v >= 0) {
+    if (delta_h > 0 && delta_v > 0) {
       q_m3h = delta_v / delta_h;
       l_min = q_m3h * 1000 / 60;
       l_s = q_m3h * 1000 / 3600;
     }
-    
+
     const confidence = delta_h < 1 ? "BAIXA" : "ALTA";
     
     intervals.push({
@@ -109,8 +110,9 @@ export function calculateKPIs(intervals: Interval[]): KPIs {
   }
 
   const validIntervals = intervals.filter(i => i.q_m3h !== null);
-  const producao_total_m3 = intervals.reduce((sum, i) => sum + i.delta_v, 0);
-  const horas_total_h = intervals.reduce((sum, i) => sum + i.delta_h, 0);
+  // Only sum positive deltas — negative delta_v is a data entry error, not negative production
+  const producao_total_m3 = intervals.reduce((sum, i) => sum + Math.max(0, i.delta_v), 0);
+  const horas_total_h = intervals.reduce((sum, i) => sum + Math.max(0, i.delta_h), 0);
   
   let q_avg_m3h: number | null = null;
   let q_avg_lmin: number | null = null;
@@ -126,15 +128,21 @@ export function calculateKPIs(intervals: Interval[]): KPIs {
       q_avg_ls = q_avg_m3h * 1000 / 3600;
     }
 
-    // COV Calculation (remains based on individual interval flows to measure stability)
-    const qValues = validIntervals.map(i => i.q_m3h!);
-    const q_avg_arithmetic = qValues.reduce((sum, q) => sum + q, 0) / qValues.length;
-    
-    if (qValues.length > 1) {
-      const variance = qValues.reduce((sum, q) => sum + Math.pow(q - q_avg_arithmetic, 2), 0) / qValues.length;
-      const stdDev = Math.sqrt(variance);
-      // Use arithmetic average for COV normalization as it relates to the variance of samples
-      cov_q_pct = (stdDev / q_avg_arithmetic) * 100;
+    // COV Calculation — weighted by operating hours (delta_h)
+    // Intervals with more operating hours are more representative of real system behavior.
+    // Using the weighted average (q_avg_m3h) as the reference ensures consistency with the
+    // displayed average flow KPI.
+    if (validIntervals.length > 1 && q_avg_m3h !== null && q_avg_m3h > 0) {
+      const covRef = q_avg_m3h; // local binding for TS narrowing inside closures
+      const totalWeight = validIntervals.reduce((sum, i) => sum + i.delta_h, 0);
+      if (totalWeight > 0) {
+        const weightedVariance = validIntervals.reduce((sum, i) => {
+          const weight = i.delta_h / totalWeight;
+          return sum + weight * Math.pow(i.q_m3h! - covRef, 2);
+        }, 0);
+        const stdDev = Math.sqrt(weightedVariance);
+        cov_q_pct = (stdDev / covRef) * 100;
+      }
     }
 
     // Utilization Rate: Total Operating Hours / Total Elapsed Time

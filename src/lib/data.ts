@@ -184,7 +184,12 @@ export async function getDashboardData(tenantId: string, period: DashboardPeriod
     const intervals = calculateIntervals(finalReadings);
     const kpis = calculateKPIs(intervals);
     const baseline = calculateBaseline(intervals, 7, settingsObject, endDate);
-    const alerts = detectAlerts(intervals, baseline || undefined, settingsObject);
+    // For gap alerts, use the effective reference date:
+    // - Current period: min(endDate, now) — don't compare against a future date
+    // - Past period: endDate — the period is closed
+    const now = new Date();
+    const alertsAsOf = endDate > now ? now : endDate;
+    const alerts = detectAlerts(intervals, baseline || undefined, settingsObject, alertsAsOf);
 
     return {
       readings: finalReadings,

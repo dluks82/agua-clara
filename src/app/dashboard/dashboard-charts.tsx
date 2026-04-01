@@ -14,25 +14,22 @@ const ProductionChart = dynamic(
   () => import("@/components/production-chart").then((m) => m.ProductionChart),
   {
     ssr: false,
-    loading: () => <ChartSkeleton title="Produção Diária" />,
+    loading: () => <ChartSkeleton title="Produção por Intervalo" />,
   }
 );
 
 export function DashboardCharts({
   intervals,
-  periodFrom,
-  periodTo,
-  showForecast,
 }: {
   intervals: Interval[];
-  periodFrom: string;
-  periodTo: string;
-  showForecast: boolean;
+  periodFrom?: string;
+  periodTo?: string;
+  showForecast?: boolean;
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-3 md:gap-4 md:grid-cols-2">
       <FlowChart data={intervals} />
-      <ProductionChart data={intervals} periodFrom={periodFrom} periodTo={periodTo} showForecast={showForecast} />
+      <ProductionChart data={intervals} />
     </div>
   );
 }
@@ -44,7 +41,7 @@ function ChartSkeleton({ title }: { title: string }) {
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">Carregando…</div>
+        <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">Carregando…</div>
       </CardContent>
     </Card>
   );

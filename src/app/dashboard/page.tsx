@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ExportButton } from "@/components/export-button";
 import { PeriodNavigator } from "@/components/period-navigator";
 import { getBillingCycleDay } from "@/app/actions";
-import { AlertTriangle, Droplets, Clock, Activity, ClipboardList } from "lucide-react";
+import { AlertTriangle, Droplets, Clock, Activity, ClipboardList, ShieldCheck } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireTenant } from "@/lib/tenancy";
 import Link from "next/link";
@@ -16,11 +16,40 @@ import { NewReadingDialog } from "@/app/dashboard/new-reading-dialog";
 import { db } from "@/db";
 import { readings } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 
 function getCachedDashboardData(tenantId: string) {
   return unstable_cache(
     async (fromIso: string, toIso: string) => {
-      return getDashboardData(tenantId, { from: new Date(fromIso), to: new Date(toIso) });
+      const from = new Date(fromIso);
+      const to = new Date(toIso);
+      const data = await getDashboardData(tenantId, { from, to });
+      
+      const now = new Date();
+      const effectiveTo = (from <= now && now <= to) ? now : to;
+      const elapsedMs = Math.max(0, effectiveTo.getTime() - from.getTime());
+      const durationMs = to.getTime() - from.getTime();
+      const fraction = durationMs > 0 ? elapsedMs / durationMs : 0;
+      
+      // Recua os limites retroagindo civilmente exatos 1 mês no calendário
+      const prevFrom = new Date(from);
+      prevFrom.setMonth(prevFrom.getMonth() - 1);
+      
+      const prevToFull = new Date(to);
+      prevToFull.setMonth(prevToFull.getMonth() - 1);
+      
+      // A fração percorrida (MTD) será estritamente proporcional à duração do mês passado
+      const prevDurationMs = prevToFull.getTime() - prevFrom.getTime();
+      const prevTo = new Date(prevFrom.getTime() + (prevDurationMs * fraction));
+      
+      const prevData = await getDashboardData(tenantId, { from: prevFrom, to: prevTo });
+      const prevDataFull = await getDashboardData(tenantId, { from: prevFrom, to: prevToFull });
+      
+      return { 
+        ...data, 
+        previousKpis: prevData.kpis,
+        previousKpisFull: prevDataFull.kpis
+      };
     },
     ["dashboard", tenantId],
     { tags: [`dashboard:${tenantId}`], revalidate: 300 }
@@ -112,7 +141,7 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Última leitura</CardTitle>
@@ -153,12 +182,20 @@ export default async function DashboardPage({
               {productionEstimateM3 !== null ? (
                 <>
                   <div className="text-2xl font-bold">{productionEstimateM3.toFixed(1)} m³</div>
-                  <div className="text-xs text-muted-foreground">Estimativa para o período selecionado</div>
+                  <div className="text-xs text-muted-foreground">Estimativa para o fechamento do período</div>
+                  <TrendBadge
+                    current={productionEstimateM3}
+                    previous={data.previousKpisFull?.producao_total_m3}
+                  />
                 </>
               ) : !showForecast ? (
                 <>
                   <div className="text-2xl font-bold">{data.kpis.producao_total_m3.toFixed(1)} m³</div>
                   <div className="text-xs text-muted-foreground">Produção confirmada no período selecionado</div>
+                  <TrendBadge
+                    current={data.kpis.producao_total_m3}
+                    previous={data.previousKpisFull?.producao_total_m3}
+                  />
                 </>
               ) : (
                 <div className="text-sm text-muted-foreground">
@@ -167,6 +204,8 @@ export default async function DashboardPage({
               )}
             </CardContent>
           </Card>
+
+          <DataQualityCard dataQuality={data.dataQuality} />
         </div>
 
         {/* Alertas */}
@@ -245,6 +284,10 @@ export default async function DashboardPage({
               <p className="text-xs text-muted-foreground">
                 No período selecionado
               </p>
+              <TrendBadge 
+                current={data.kpis.producao_total_m3} 
+                previous={data.previousKpis?.producao_total_m3} 
+              />
             </CardContent>
           </Card>
           
@@ -273,6 +316,10 @@ export default async function DashboardPage({
               <p className="text-xs text-muted-foreground">
                 {data.kpis.q_avg_m3h ? `${data.kpis.q_avg_m3h.toFixed(2)} m³/h` : "Sem dados"}
               </p>
+              <TrendBadge 
+                current={data.kpis.q_avg_lmin} 
+                previous={data.previousKpis?.q_avg_lmin} 
+              />
             </CardContent>
           </Card>
           
@@ -299,6 +346,11 @@ export default async function DashboardPage({
               <p className="text-xs text-muted-foreground">
                 Utilização: {data.kpis.utilization_rate_pct ? `${data.kpis.utilization_rate_pct.toFixed(1)}%` : "N/A"}
               </p>
+              <TrendBadge 
+                current={data.kpis.utilization_rate_pct} 
+                previous={data.previousKpis?.utilization_rate_pct} 
+                inverse={true}
+              />
             </CardContent>
           </Card>
           
@@ -340,6 +392,78 @@ export default async function DashboardPage({
         />
       </div>
     </TooltipProvider>
+  );
+}
+
+function TrendBadge({ current, previous, inverse = false }: { current: number | null, previous: number | null, inverse?: boolean }) {
+  if (current === null || previous === null || previous === 0) return null;
+  const pct = ((current - previous) / previous) * 100;
+  if (Math.abs(pct) < 1) return <span className="text-muted-foreground flex items-center text-xs mt-2"><Minus className="w-3 h-3 mr-1"/> Tendência estável</span>;
+  
+  const isPositive = pct > 0;
+  const isGood = inverse ? !isPositive : isPositive;
+  const color = isGood ? "text-emerald-500" : "text-destructive";
+  const Icon = isPositive ? TrendingUp : TrendingDown;
+  
+  return (
+    <span className={`flex items-center text-xs mt-2 font-medium ${color}`}>
+      <Icon className="w-3 h-3 mr-1"/>
+      {isPositive ? "+" : ""}{pct.toFixed(1)}% vs. anterior
+    </span>
+  );
+}
+
+function DataQualityCard({ dataQuality }: { dataQuality: import("@/lib/data-quality").DataQuality | null }) {
+  const levelColor = dataQuality
+    ? dataQuality.level === "ALTA"
+      ? "text-emerald-500"
+      : dataQuality.level === "MÉDIA"
+        ? "text-amber-500"
+        : "text-destructive"
+    : "text-muted-foreground";
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-sm font-medium">Qualidade dos Dados</CardTitle>
+          <HelpHint
+            label="Ajuda: qualidade dos dados"
+            content={
+              <div className="space-y-1 text-sm">
+                <p>
+                  Indica o quão confiáveis são os KPIs com base no comportamento de registro de
+                  leituras no período — não avalia as leituras em si.
+                </p>
+                <p className="font-medium">Fatores avaliados:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Frequência (40%) — intervalo médio entre leituras</li>
+                  <li>Regularidade (25%) — consistência dos intervalos</li>
+                  <li>Cobertura (20%) — proporção do período com leituras</li>
+                  <li>Gaps (15%) — ausência de lacunas longas</li>
+                </ul>
+              </div>
+            }
+          />
+        </div>
+        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent className="space-y-1">
+        {dataQuality ? (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold">{dataQuality.score}</span>
+              <span className={`text-sm font-semibold ${levelColor}`}>{dataQuality.level}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {dataQuality.recommendations[0]}
+            </p>
+          </>
+        ) : (
+          <div className="text-sm text-muted-foreground">Sem dados suficientes para avaliar.</div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

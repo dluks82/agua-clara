@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
     const intervals = dashboardData ? dashboardData.intervals : calculateIntervals(readingsData);
     const kpis = dashboardData ? dashboardData.kpis : calculateKPIs(intervals);
     const baselineAsOf = to ? new Date(to) : new Date();
-    const baseline = dashboardData ? dashboardData.baseline : calculateBaseline(intervals, 7, undefined, baselineAsOf);
-    const alerts = dashboardData ? dashboardData.alerts : detectAlerts(intervals, baseline || undefined);
+    const baseline = dashboardData ? dashboardData.baseline : calculateBaseline(intervals, 30, undefined, baselineAsOf);
+    const alerts = dashboardData ? dashboardData.alerts : detectAlerts(intervals, baseline || undefined, undefined, baselineAsOf);
     
     // Gerar CSV
     const csvLines = [];

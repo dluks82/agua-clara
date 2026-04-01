@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
-import { format, addMonths, subMonths, startOfDay, endOfDay } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { addMonths, subMonths, startOfDay, endOfDay } from "date-fns"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -69,10 +68,10 @@ export function PeriodNavigator({
         <Calendar className="h-4 w-4 text-muted-foreground" />
         <span className="min-w-0 truncate">
           <span className="sm:hidden">
-            {format(currentFrom, "dd/MM", { locale: ptBR })} - {format(currentTo, "dd/MM", { locale: ptBR })}
+            {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" }).format(currentFrom)} - {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" }).format(currentTo)}
           </span>
           <span className="hidden sm:inline">
-            {format(currentFrom, "dd/MM/yyyy", { locale: ptBR })} - {format(currentTo, "dd/MM/yyyy", { locale: ptBR })}
+            {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" }).format(currentFrom)} - {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" }).format(currentTo)}
           </span>
         </span>
       </div>
